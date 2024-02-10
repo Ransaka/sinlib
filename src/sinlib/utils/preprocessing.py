@@ -2,8 +2,11 @@ import multiprocessing
 import re
 from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
 import numpy as np
+import os
 
-with open("../data/sinhala_chars_with_special_chars.txt",'r') as f:
+file_path = os.path.join(os.path.dirname(__file__), '../data', 'sinhala_chars_with_special_chars.txt')
+
+with open(file_path,'r') as f:
     SINHALA_CHARS_WITH_SPECIAL_CHARS = f.read().split("\n")
 
 def remove_non_printable(input_string):
