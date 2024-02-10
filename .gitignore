@@ -1,2 +1,5 @@
 .ipynb_checkpoints/
 __pycache__/
+src/.DS_Store
+src/sinhala_tokenizers/.DS_Store
+.DS_Store

@@ -1,6 +1,6 @@
 import multiprocessing
 import re
-from utils.chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
+from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
 import numpy as np
 
 with open("../data/sinhala_chars_with_special_chars.txt",'r') as f:

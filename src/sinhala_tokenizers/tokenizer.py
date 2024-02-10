@@ -1,5 +1,5 @@
 import concurrent.futures
-from utils.preprocessing import process_text
+from .utils.preprocessing import process_text
 
 class Tokenizer:
     def __init__(self):
