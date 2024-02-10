@@ -1,6 +1,5 @@
 import concurrent.futures
-from utils.chars import VOWEL_DIACRITICS, NUMERALS, NUBERS_AND_PUNKTS, ALL_LETTERS
-from utils.preprocessing import remove_non_printable
+from utils.preprocessing import process_text
 
 class Tokenizer:
     def __init__(self):
@@ -25,28 +24,9 @@ class Tokenizer:
     def __len__(self):
         return len(self.vocab_map)
 
-    def __process_text(self, t):
-        # t = remove_non_printable(t)
-        tokenized_chars = []
-
-        for i, char in enumerate(t):
-            if char in VOWEL_DIACRITICS:
-                continue
-            if char in NUBERS_AND_PUNKTS:
-                tokenized_chars.append(char)
-            elif char == ' ':
-                tokenized_chars.append(" ")
-            elif char in ALL_LETTERS:
-                if i < len(t) - 1 and t[i + 1] in ALL_LETTERS:
-                    tokenized_chars.append(char)
-                elif i < len(t) - 1 and t[i + 1] in VOWEL_DIACRITICS:
-                    tokenized_chars.append(char + t[i + 1])
-                else:
-                    tokenized_chars.append(char)
-            else:
-                tokenized_chars.append(char)
-
-        return tokenized_chars
+    @staticmethod
+    def __process_text(t):
+        return process_text(t)
 
     def __train_chracter_level_tokenizer(self, text_list):
         with concurrent.futures.ThreadPoolExecutor() as executor:
