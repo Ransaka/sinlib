@@ -4,10 +4,10 @@ from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
 import numpy as np
 import os
 
-file_path = os.path.join(os.path.dirname(__file__), '../data', 'sinhala_chars_with_special_chars.txt')
+# file_path = os.path.join(os.path.dirname(__file__), '../data', 'sinhala_chars_with_special_chars.txt')
 
-with open(file_path,'r') as f:
-    SINHALA_CHARS_WITH_SPECIAL_CHARS = f.read().split("\n")
+# with open(file_path,'r') as f:
+#     SINHALA_CHARS_WITH_SPECIAL_CHARS = f.read().split("\n")
 
 def remove_non_printable(input_string):
     printable_pattern = re.compile(r'[^\u0020-\u007E\u0D80-\u0DFF]+', flags=re.UNICODE)
@@ -28,18 +28,18 @@ def remove_english_characters(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def retain_sinhala_characters(text):
-    """
-    Remove non-Sinhala characters from the given text using a conditional expression.
+# def retain_sinhala_characters(text):
+#     """
+#     Remove non-Sinhala characters from the given text using a conditional expression.
 
-    Parameters:
-    - text (str): The input text containing mixed languages.
-    Returns:
-    - str: Text with Sinhala language.
-    """
-    input_string = "".join([char for char in text if char in SINHALA_CHARS_WITH_SPECIAL_CHARS])
-    cleaned_string = re.sub(r'\s+', ' ', input_string).strip()
-    return cleaned_string
+#     Parameters:
+#     - text (str): The input text containing mixed languages.
+#     Returns:
+#     - str: Text with Sinhala language.
+#     """
+#     input_string = "".join([char for char in text if char in SINHALA_CHARS_WITH_SPECIAL_CHARS])
+#     cleaned_string = re.sub(r'\s+', ' ', input_string).strip()
+#     return cleaned_string
 
 
 def process_text(t):
