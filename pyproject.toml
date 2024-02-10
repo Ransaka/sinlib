@@ -1,6 +1,6 @@
 [project]
 name = "sinlib"
-version = "0.0.2"
+version = "0.0.4"
 description = "Sinhala NLP Toolkit"
 authors = [
     { name = "Ransaka", email = "ransaka.ravihara@gmail.com" }
