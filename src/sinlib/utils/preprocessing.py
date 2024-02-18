@@ -92,7 +92,7 @@ def process_text_with_token_counts(t):
     return tokenized_chars,token_counts
 
 
-def get_sinhala_token_percentage(text):
+def get_sinhala_character_percentage(text):
     if isinstance(text, str):
         tokenized_text, sinhala_token_count = process_text_with_token_counts(text)
         tokenized_text = [tok for tok in tokenized_text if tok != " "]
