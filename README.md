@@ -1,4 +1,4 @@
-# Sinlib
+# Sinlib (Buggy alpha version)
 
 ![Alt text](sinlib.png)
 
@@ -31,9 +31,9 @@ encoding = tokenizer("මේ අතර, පෙබරවාරි මාසයේ
 ```
 02. Preprocessor
    ```python
-sent = ['මෙය සිංහල වාක්‍යක්', 'මෙය සිංහල වාක්‍යක් සමග english character එකක්','This is complete english sentence']
+sent = ['මෙය සිංහල වාක්‍යක්', 'මෙය සිංහල වාක්‍යක් සමග english character කීපයක්','This is complete english sentence']
 print(sent)
-['මෙය සිංහල වාක්\u200dයක්', 'මෙය සිංහල වාක්\u200dයක් සමග english character එකක්', 'This is complete english sentence']
+['මෙය සිංහල වාක්\u200dයක්', 'මෙය සිංහල වාක්\u200dයක් සමග english character කීපයක්', 'This is complete english sentence']
 
 from sinlib.preprocessing import get_sinhala_character_ratio
 
