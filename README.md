@@ -1,5 +1,7 @@
 # Sinlib
 
+![Alt text](sinlib.png)
+
 ## Installation
 
 Using pypi
@@ -33,8 +35,8 @@ sent = ['මෙය සිංහල වාක්‍යක්', 'මෙය සි�
 print(sent)
 ['මෙය සිංහල වාක්\u200dයක්', 'මෙය සිංහල වාක්\u200dයක් සමග english character එකක්', 'This is complete english sentence']
 
-from sinlib import get_sinhala_token_percentage
+from sinlib.preprocessing import get_sinhala_character_ratio
 
-get_sinhala_token_percentage(sent)
+get_sinhala_character_ratio(sent)
 [0.9, 0.46875, 0.0]
 ```

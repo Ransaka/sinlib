@@ -1,3 +1,4 @@
+from functools import partial
 import multiprocessing
 import re
 from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
@@ -68,7 +69,10 @@ def process_text(t):
     return tokenized_chars
 
 
-def process_text_with_token_counts(t, consider_special_character_as_sinhala):
+def process_text_with_token_counts(t:str, consider_special_character_as_sinhala:bool, ignore_non_printable:bool):
+    if ignore_non_printable:
+        t = remove_non_printable(t)
+
     tokenized_chars = []
     token_counts = 0
 
@@ -96,16 +100,18 @@ def process_text_with_token_counts(t, consider_special_character_as_sinhala):
 
 
 def get_sinhala_character_ratio(text, consider_special_character_as_sinhala:bool=True, ignore_non_printable:bool=True):
-    """Retuning sinhala character ratio for given text string for given settings."""
-    if ignore_non_printable:
-        text = remove_non_printable(text)
+    """Retuning sinhala character ratio for given text string for given settings. Expects optional two parameters.
+    consider_special_character_as_sinhala: if this set to true all numbers and special characters will consider as sinhala.
+    ignore_non_printable: if this set to true non printables will remove before start processing
+    """
     if isinstance(text, str):
-        tokenized_text, sinhala_token_count = process_text_with_token_counts(text,consider_special_character_as_sinhala)
+        tokenized_text, sinhala_token_count = process_text_with_token_counts(text,consider_special_character_as_sinhala,ignore_non_printable=ignore_non_printable)
         tokenized_text = [tok for tok in tokenized_text if tok != " "]
         return sinhala_token_count / len(tokenized_text)
     elif isinstance(text, list):
         pool = multiprocessing.Pool()
-        results = pool.map(process_text_with_token_counts, text)
+        partial_process_text = partial(process_text_with_token_counts, consider_special_character_as_sinhala=consider_special_character_as_sinhala, ignore_non_printable=ignore_non_printable)
+        results = pool.map(partial_process_text, text)
         pool.close()
         pool.join()
         encodings = [tok[0] for tok in results if tok[0] != " "]
