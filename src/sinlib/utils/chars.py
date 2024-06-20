@@ -28,7 +28,7 @@ VOWELS = [
 VOWEL_DIACRITICS = [
     '', 'ා', 'ැ', 'ෑ', 'ි', 'ී', 'ු', 'ූ', 'ෘ',
     'ෲ', 'ෙ', 'ේ', 'ෛ', 'ො', 'ෝ', 'ෞ',
-    'ං', 'ඃ', '්'
+    'ං', 'ඃ', '්', 'ෳ'
 ]
 
 LONG_TO_SHORT_VOWEL_DIACRITICS_MAPPING = {
