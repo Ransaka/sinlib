@@ -5,9 +5,12 @@ from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
 import json
 from pathlib import Path
 import warnings
+from os import path
 
-DEFAULT_VOCAB_MAP_FP = "../data/vocab_map.json"
-CHAR_MAPPER_FP = "../data/char_map.json"
+
+CURRENT_PATH = path.dirname(path.abspath(__file__))
+DEFAULT_VOCAB_MAP_FP = path.join(CURRENT_PATH, 'data', 'vocab_map.json')
+CHAR_MAPPER_FP = path.join(CURRENT_PATH, 'data', 'char_map.json')
 
 
 def load_char_mapper(char_mapper_fp):
