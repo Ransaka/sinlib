@@ -2,13 +2,32 @@ from functools import partial
 import multiprocessing
 import re
 from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
-import numpy as np
-import os
+import json
+from pathlib import Path
+import warnings
 
-# file_path = os.path.join(os.path.dirname(__file__), '../data', 'sinhala_chars_with_special_chars.txt')
+DEFAULT_VOCAB_MAP_FP = "../data/vocab_map.json"
+CHAR_MAPPER_FP = "../data/char_map.json"
 
-# with open(file_path,'r') as f:
-#     SINHALA_CHARS_WITH_SPECIAL_CHARS = f.read().split("\n")
+
+def load_char_mapper(char_mapper_fp):
+    if Path(char_mapper_fp).is_file():
+        with open(char_mapper_fp, "r") as f:
+            char_mapper = json.load(f)
+    else:
+        warnings.warn(
+            "File not found at the specified path. Loaded default char map.",
+            UserWarning,
+        )
+        with open(CHAR_MAPPER_FP, "r") as f:
+            char_mapper = json.load(f)
+    return char_mapper
+
+
+def load_default_vocab_map():
+    with open(DEFAULT_VOCAB_MAP_FP, "r") as f:
+        vocab_map = json.load(f)
+    return vocab_map
 
 
 def remove_non_printable(input_string):
@@ -69,7 +88,38 @@ def process_text(t):
     return tokenized_chars
 
 
-def process_text_with_token_counts(t:str, consider_special_character_as_sinhala:bool, ignore_non_printable:bool):
+def process_text_with_token_counts(
+    t: str, consider_special_character_as_sinhala: bool, ignore_non_printable: bool
+):
+    """
+    Process the given text, tokenizing it and counting the tokens.
+
+    Parameters
+    ----------
+    t : str
+        The text to be processed.
+    consider_special_character_as_sinhala : bool
+        If True, special characters will be considered as Sinhala characters.
+    ignore_non_printable : bool
+        If True, non-printable characters will be removed from the text.
+
+    Returns
+    -------
+    tokenized_chars : list of str
+        List of tokenized characters from the text.
+    token_counts : int
+        Total count of tokens in the text.
+
+    Examples
+    --------
+    >>> from sinlib.utils.preprocessing import process_text_with_token_counts
+    >>> text = "මම ගෙදර ගියා."
+    >>> tokenized_chars, token_counts = process_text_with_token_counts(text, True, True)
+    >>> print(tokenized_chars)
+    ['ම', 'ම', ' ', 'ගෙ', 'ද', 'ර', ' ', 'ගි', 'යා', '.']
+    >>> print(token_counts)
+    10
+    """
     if ignore_non_printable:
         t = remove_non_printable(t)
 
@@ -92,25 +142,62 @@ def process_text_with_token_counts(t:str, consider_special_character_as_sinhala:
                 tokenized_chars.append(char + t[i + 1])
             else:
                 tokenized_chars.append(char)
-
         else:
             tokenized_chars.append(char)
 
     return tokenized_chars, token_counts
 
 
-def get_sinhala_character_ratio(text, consider_special_character_as_sinhala:bool=True, ignore_non_printable:bool=True):
-    """Retuning sinhala character ratio for given text string for given settings. Expects optional two parameters.
-    consider_special_character_as_sinhala: if this set to true all numbers and special characters will consider as sinhala.
-    ignore_non_printable: if this set to true non printables will remove before start processing
+def get_sinhala_character_ratio(
+    text,
+    consider_special_character_as_sinhala: bool = True,
+    ignore_non_printable: bool = True,
+):
+    """
+    Calculate the ratio of Sinhala characters in the given text.
+
+    Parameters
+    ----------
+    text : str or list of str
+        The text or list of text strings to be processed.
+    consider_special_character_as_sinhala : bool, default=True
+        If True, numbers and special characters will be considered as Sinhala characters.
+    ignore_non_printable : bool, default=True
+        If True, non-printable characters will be removed before processing.
+
+    Returns
+    -------
+    ratio : float or list of float
+        The ratio of Sinhala characters in the text. If the input is a list, returns a list of ratios for each text string.
+
+    Examples
+    --------
+    >>> from sinlib.utils.preprocessing import get_sinhala_character_ratio
+    >>> text = "මම ගෙදර ගියා."
+    >>> ratio = get_sinhala_character_ratio(text, True, True)
+    >>> print(ratio)
+    1.0
+
+    >>> texts = ["මම ගෙදර ගියා.", "This is an example."]
+    >>> ratio = get_sinhala_character_ratio(texts, False, True)
+    >>> print(ratios)
+    [0.875, 0.0]
     """
     if isinstance(text, str):
-        tokenized_text, sinhala_token_count = process_text_with_token_counts(text,consider_special_character_as_sinhala,ignore_non_printable=ignore_non_printable)
+        tokenized_text, sinhala_token_count = process_text_with_token_counts(
+            text,
+            consider_special_character_as_sinhala,
+            ignore_non_printable=ignore_non_printable,
+        )
         tokenized_text = [tok for tok in tokenized_text if tok != " "]
         return sinhala_token_count / len(tokenized_text)
     elif isinstance(text, list):
         pool = multiprocessing.Pool()
-        partial_process_text = partial(process_text_with_token_counts, consider_special_character_as_sinhala=consider_special_character_as_sinhala, ignore_non_printable=ignore_non_printable)
+        partial_process_text = partial(
+            process_text_with_token_counts,
+            consider_special_character_as_sinhala=consider_special_character_as_sinhala,
+            ignore_non_printable=ignore_non_printable,
+        )
         results = pool.map(partial_process_text, text)
         pool.close()
         pool.join()
