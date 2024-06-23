@@ -34,7 +34,7 @@ class Romanizer:
             self.tokenizer.token_id_to_token_map[c] for c in encodings
         ]
         romanized_sinhala = [
-            self.char_mapper.get(ch, ch if ch in NUBERS_AND_PUNKTS.union(" ") else None)
+            self.char_mapper.get(ch, ch if ch in NUBERS_AND_PUNKTS.union(" ") else '')
             for ch in decoded_sinhala_chars
         ]
         romanized_sinhala = "".join(romanized_sinhala)
