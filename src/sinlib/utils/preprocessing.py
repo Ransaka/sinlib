@@ -28,7 +28,7 @@ def load_char_mapper(char_mapper_fp):
 
 
 def load_default_vocab_map():
-    with open(DEFAULT_VOCAB_MAP_FP, "r") as f:
+    with open(Path(DEFAULT_VOCAB_MAP_FP) / "vocab.json", "r") as f:
         vocab_map = json.load(f)
     return vocab_map
 
