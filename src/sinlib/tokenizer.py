@@ -6,22 +6,44 @@ from .utils.preprocessing import process_text, load_default_vocab_map
 
 
 class Tokenizer:
-    def __init__(self):
+    def __init__(
+        self, max_length: int, unknown_token: str = "<unk>", pad_token: str = "<pad>"
+    ):
         self.unknown_token_id = None
         self.token_id_to_token_map = None
         self.vocab_map = None
-        self.unknown_token = "<unk>"
+        self.unknown_token = unknown_token
+        self.pad_token = pad_token
         self.tokenized_chars = []
         self.unique_chars = []
+        self.special_tokens = [self.unknown_token, self.pad_token]
+        self.max_length = max_length
+        self.pad_token_id = None
 
-    def __encode(self, text) -> list:
+    def __encode(self, text, truncate_and_pad: bool) -> list:
         processed_text = self.__process_text(text)
-        encoded_text = [
+        text_encodings = [
             self.vocab_map.get(char, self.unknown_token_id) for char in processed_text
         ]
-        return encoded_text
+        if truncate_and_pad:
+            return self.pad_or_truncate(
+                sequence=text_encodings,
+                max_length=self.max_length,
+                padding_value=self.pad_token_id,
+            )
+        else:
+            return text_encodings
 
-    def __call__(self, text) -> list:
+    @staticmethod
+    def pad_or_truncate(sequence, max_length, padding_value):
+        if len(sequence) > max_length:
+            return sequence[:max_length]
+        elif len(sequence) < max_length:
+            return sequence + [padding_value] * (max_length - len(sequence))
+        else:
+            return sequence
+
+    def __call__(self, text, truncate_and_pad: bool = True) -> list:
         """
         Encode the given text into a list of tokens.
 
@@ -29,6 +51,8 @@ class Tokenizer:
         ----------
         text : str
             Text to be encoded.
+        truncate_and_pad: bool
+            Set as True if you need to truncate/pad encodings False otherwise
 
         Returns
         -------
@@ -44,9 +68,9 @@ class Tokenizer:
         >>> tokenizer("මම ගෙදර ගියා")
         [2041, 2041, 942, 965, 624, 909, 942, 54, 1960]
         """
-        return self.__encode(text)
+        return self.__encode(text, truncate_and_pad=truncate_and_pad)
 
-    def decode(self, ids) -> str:
+    def decode(self, ids, skip_special_tokens: bool = False) -> str:
         """
         Decode a list of token IDs into a string.
 
@@ -54,6 +78,8 @@ class Tokenizer:
         ----------
         ids : list of int
             List of token IDs to be decoded.
+        skip_special_tokens: bool
+            Whether to consider special tokens when decoding sequences
 
         Returns
         -------
@@ -69,9 +95,22 @@ class Tokenizer:
         >>> tokenizer.decode(encoded_tokens)
         'මම ගෙදර ගියා'
         """
-        return "".join(
-            [self.token_id_to_token_map.get(token, self.unknown_token) for token in ids]
-        )
+        special_token_ids = [self.vocab_map[tok] for tok in self.special_tokens]
+        if skip_special_tokens:
+            return "".join(
+                [
+                    self.token_id_to_token_map.get(token, self.unknown_token)
+                    for token in ids
+                    if token not in special_token_ids
+                ]
+            )
+        else:
+            return "".join(
+                [
+                    self.token_id_to_token_map.get(token, self.unknown_token)
+                    for token in ids
+                ]
+            )
 
     def train(self, text_list) -> None:
         """
@@ -94,6 +133,10 @@ class Tokenizer:
     def __len__(self):
         return len(self.vocab_map)
 
+    @property
+    def vocab_size(self):
+        return len(self)
+
     @staticmethod
     def __process_text(t):
         return process_text(t)
@@ -105,7 +148,9 @@ class Tokenizer:
         self.unique_chars = set(self.tokenized_chars)
         self.vocab_map = dict(zip(self.unique_chars, range(len(self.unique_chars))))
         self.vocab_map[self.unknown_token] = len(self.vocab_map)
+        self.vocab_map[self.pad_token] = len(self.vocab_map)
         self.unknown_token_id = self.vocab_map[self.unknown_token]
+        self.pad_token_id = self.vocab_map[self.pad_token]
         self.token_id_to_token_map = {
             value: key for key, value in self.vocab_map.items()
         }
@@ -134,9 +179,17 @@ class Tokenizer:
         >>> tokenizer = Tokenizer()
         >>> tokenizer.load_from_pretrained("pretrained_vocab.json")
         """
-        if Path(file_path).is_file():
-            with open(file_path, "r") as f:
+        file_path = Path(file_path)
+        if file_path.exists():
+            with open(file_path / "vocab.json", "r") as f:
                 self.vocab_map = json.load(f)
+            with open(file_path / "config.json", "r") as f:
+                configurations = json.load(f)
+            self.unknown_token = configurations["unknown_token"]
+            self.pad_token = configurations["pad_token"]
+            self.unknown_token_id = configurations["unknown_token_id"]
+            self.pad_token_id = configurations["pad_token_id"]
+            self.max_length = configurations["max_length"]
         else:
             warnings.warn(
                 "File not found at the specified path. Loaded default vocab map.",
@@ -148,11 +201,18 @@ class Tokenizer:
             value: key for key, value in self.vocab_map.items()
         }
         self.unknown_token_id = self.vocab_map[self.unknown_token]
+        self.pad_token_id = self.vocab_map[self.pad_token]
         return self
 
     def save_tokenizer(self, save_path: str):
         save_path = Path(save_path)
-        configurations = {"unknown_token": self.unknown_token}
+        configurations = {
+            "unknown_token": self.unknown_token,
+            "pad_token": self.pad_token,
+            "unknown_token_id": self.unknown_token_id,
+            "pad_token_id": self.pad_token_id,
+            "max_length": self.max_length,
+        }
 
         with open(save_path / "vocab.json", "w", encoding="utf-8") as file:
             json.dump(self.vocab_map, file, ensure_ascii=False, indent=4)

@@ -9,7 +9,7 @@ from os import path
 
 
 CURRENT_PATH = path.dirname(path.abspath(__file__))
-DEFAULT_VOCAB_MAP_FP = path.join(CURRENT_PATH, 'data', 'vocab_map.json')
+DEFAULT_VOCAB_MAP_FP = path.join(CURRENT_PATH, 'data')
 CHAR_MAPPER_FP = path.join(CURRENT_PATH, 'data', 'char_map.json')
 
 

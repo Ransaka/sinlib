@@ -1,0 +1,7 @@
+{
+    "unknown_token": "<unk>",
+    "pad_token": "<pad>",
+    "unknown_token_id": 126,
+    "pad_token_id": 127,
+    "max_length": 30
+}

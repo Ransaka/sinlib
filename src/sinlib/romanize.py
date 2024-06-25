@@ -7,14 +7,14 @@ import numpy as np
 
 
 class Romanizer:
-    def __init__(self, char_mapper_fp: str, tokenizer_vocab_path: str):
+    def __init__(self, char_mapper_fp: str, tokenizer_path: str):
         if char_mapper_fp is None:
             char_mapper_fp = CHAR_MAPPER_FP
-        if tokenizer_vocab_path is None:
-            tokenizer_vocab_path = DEFAULT_VOCAB_MAP_FP
+        if tokenizer_path is None:
+            tokenizer_path = DEFAULT_VOCAB_MAP_FP
         self.char_mapper = load_char_mapper(char_mapper_fp)
-        self.tokenizer = Tokenizer()
-        self.tokenizer.load_from_pretrained(tokenizer_vocab_path)
+        self.tokenizer = Tokenizer(max_length=None)
+        self.tokenizer.load_from_pretrained(tokenizer_path)
 
     def __call__(self, text):
         return self.__romanize(text)
@@ -29,7 +29,7 @@ class Romanizer:
             for ch in chars
         ]
         sinhala_text = "".join(chars[sinhala_mask]).strip()
-        encodings = self.tokenizer(sinhala_text)
+        encodings = self.tokenizer(sinhala_text, truncate_and_pad=False)
         decoded_sinhala_chars = [
             self.tokenizer.token_id_to_token_map[c] for c in encodings
         ]
