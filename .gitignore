@@ -3,3 +3,5 @@ __pycache__/
 src/.DS_Store
 src/sinhala_tokenizers/.DS_Store
 .DS_Store
+examples/config.json
+examples/vocab.json
