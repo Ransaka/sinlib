@@ -5,3 +5,6 @@ src/sinhala_tokenizers/.DS_Store
 .DS_Store
 examples/config.json
 examples/vocab.json
+experiments/experiments.ipynb
+experiments/test.py
+experiments/*
