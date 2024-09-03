@@ -58,7 +58,8 @@ class Tokenizer:
                         text_encodings.append(self.vocab_map[token])
                     else:
                         continue
-                        
+                else:
+                    text_encodings.append(self.vocab_map.get(token, self.unknown_token_id))
         if truncate_and_pad:
             return self.pad_or_truncate(
                 sequence=text_encodings,
