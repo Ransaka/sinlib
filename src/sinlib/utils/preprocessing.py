@@ -10,6 +10,7 @@ class Filename(Enum):
     """Enumeration for consistent filename references."""
     VOCAB = "vocab.json"
     CONFIG = "config.json"
+    CHAR_MAPPER = "char_map.json"
 
 
 def download_hub_file(file_name:str):
@@ -20,7 +21,8 @@ def download_hub_file(file_name:str):
         repo_type="model",
     )
 
-def load_char_mapper(char_mapper_fp):
+def load_char_mapper():
+    char_mapper_fp = download_hub_file(Filename.CHAR_MAPPER.value)
     if Path(char_mapper_fp).is_file():
         with open(char_mapper_fp, "r") as f:
             char_mapper = json.load(f)

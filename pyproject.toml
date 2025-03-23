@@ -1,14 +1,15 @@
 [project]
 name = "sinlib"
-version = "0.1.6"
+version = "0.1.7"
 description = "Sinhala NLP Toolkit"
 authors = [
     { name = "Ransaka", email = "ransaka.ravihara@gmail.com" }
 ]
 dependencies = [
-    "numpy",
-    "torch",
-    "tqdm"
+    "numpy >= 1.24.0",
+    "torch >= 2.0.0",
+    "tqdm >= 4.64.1",
+    "huggingface_hub == 0.26.2"
 ]
 license = { file = "LICENSE" }
 readme = "README.md"

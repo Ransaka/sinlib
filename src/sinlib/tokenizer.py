@@ -199,9 +199,8 @@ class Tokenizer:
 
     def load_from_pretrained(self, file_path: str, load_default_tokenizer:bool = False) -> 'Tokenizer':
         """Load tokenizer from pretrained files."""
-        file_path = Path(file_path)
 
-        if load_default_tokenizer and file_path:
+        if load_default_tokenizer and (file_path is not None):
             raise ValueError("Both file_path and load_default_tokenizer cannot be provide.")
         
         if load_default_tokenizer:
@@ -209,6 +208,7 @@ class Tokenizer:
             return self
         
         try:
+            file_path = Path(file_path)
             if file_path.exists():
                 with open(file_path / "vocab.json", "r", encoding="utf-8") as f:
                     self.vocab_map = json.load(f)

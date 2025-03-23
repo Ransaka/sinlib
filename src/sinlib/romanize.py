@@ -11,8 +11,7 @@ from numpy.typing import NDArray
 
 from .tokenizer import Tokenizer
 from .utils.chars import ALL_SINHALA_CHARACTERS, NUBERS_AND_PUNKTS
-from .utils.preprocessing import (CHAR_MAPPER_FP, DEFAULT_VOCAB_MAP_FP,
-                                load_char_mapper, remove_non_printable)
+from .utils.preprocessing import load_char_mapper, remove_non_printable
 
 
 class Romanizer:
@@ -39,9 +38,9 @@ class Romanizer:
             char_mapper_fp: Path to character mapping file
             tokenizer_path: Path to tokenizer vocabulary file
         """
-        self.char_mapper = load_char_mapper(char_mapper_fp or CHAR_MAPPER_FP)
+        self.char_mapper = load_char_mapper()
         self.tokenizer = Tokenizer(max_length=None)
-        self.tokenizer.load_from_pretrained(tokenizer_path or DEFAULT_VOCAB_MAP_FP)
+        self.tokenizer.load_from_pretrained(file_path=None, load_default_tokenizer=True)
 
     def __call__(self, text: Union[str, List[str]]) -> Union[str, List[str]]:
         """
