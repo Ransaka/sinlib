@@ -4,33 +4,45 @@ import re
 from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
 import json
 from pathlib import Path
-import warnings
-from os import path
+from enum import Enum
+
+class Filename(Enum):
+    """Enumeration for consistent filename references."""
+    VOCAB = "vocab.json"
+    CONFIG = "config.json"
 
 
-CURRENT_PATH = path.dirname(path.abspath(__file__))
-DEFAULT_VOCAB_MAP_FP = path.join(CURRENT_PATH, 'data')
-CHAR_MAPPER_FP = path.join(CURRENT_PATH, 'data', 'char_map.json')
-
+def download_hub_file(file_name:str):
+    from huggingface_hub.file_download import hf_hub_download
+    return hf_hub_download(
+        repo_id="Ransaka/sinlib",
+        filename=file_name,
+        repo_type="model",
+    )
 
 def load_char_mapper(char_mapper_fp):
     if Path(char_mapper_fp).is_file():
         with open(char_mapper_fp, "r") as f:
             char_mapper = json.load(f)
     else:
-        warnings.warn(
+        raise ValueError(
             "File not found at the specified path. Loaded default char map.",
             UserWarning,
         )
-        with open(CHAR_MAPPER_FP, "r") as f:
-            char_mapper = json.load(f)
     return char_mapper
 
 
 def load_default_vocab_map():
-    with open(Path(DEFAULT_VOCAB_MAP_FP) / "vocab.json", "r") as f:
+    file_path = download_hub_file(Filename.VOCAB.value)
+    with open(file_path, "r") as f:
         vocab_map = json.load(f)
     return vocab_map
+
+def load_default_config():
+    file_path = download_hub_file(Filename.CONFIG.value)
+    with open(file_path, "r") as f:
+        config = json.load(f)
+    return config
 
 
 def remove_non_printable(input_string):
@@ -92,7 +104,7 @@ def process_text(t):
 
 
 def process_text_with_token_counts(
-    t: str, consider_special_character_as_sinhala: bool, ignore_non_printable: bool
+    t: str, ignore_punctuation_and_numbers: bool, ignore_non_printable: bool
 ):
     """
     Process the given text, tokenizing it and counting the tokens.
@@ -132,7 +144,7 @@ def process_text_with_token_counts(
     for i, char in enumerate(t):
         if char in VOWEL_DIACRITICS:
             continue
-        if (char in NUBERS_AND_PUNKTS) and (consider_special_character_as_sinhala):
+        if (char in NUBERS_AND_PUNKTS) and (ignore_punctuation_and_numbers):
             tokenized_chars.append(char)
             token_counts += 1
         elif char == " ":
@@ -153,7 +165,7 @@ def process_text_with_token_counts(
 
 def get_sinhala_character_ratio(
     text,
-    consider_special_character_as_sinhala: bool = True,
+    ignore_punctuation_and_numbers: bool = True,
     ignore_non_printable: bool = True,
 ):
     """
@@ -189,7 +201,7 @@ def get_sinhala_character_ratio(
     if isinstance(text, str):
         tokenized_text, sinhala_token_count = process_text_with_token_counts(
             text,
-            consider_special_character_as_sinhala,
+            ignore_punctuation_and_numbers,
             ignore_non_printable=ignore_non_printable,
         )
         tokenized_text = [tok for tok in tokenized_text if tok != " "]
@@ -198,7 +210,7 @@ def get_sinhala_character_ratio(
         pool = multiprocessing.Pool()
         partial_process_text = partial(
             process_text_with_token_counts,
-            consider_special_character_as_sinhala=consider_special_character_as_sinhala,
+            ignore_punctuation_and_numbers=ignore_punctuation_and_numbers,
             ignore_non_printable=ignore_non_printable,
         )
         results = pool.map(partial_process_text, text)
