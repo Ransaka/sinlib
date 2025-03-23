@@ -6,12 +6,13 @@ import json
 from pathlib import Path
 from enum import Enum
 
-class Filename(Enum):
+class Filenames(Enum):
     """Enumeration for consistent filename references."""
     VOCAB = "vocab.json"
     CONFIG = "config.json"
     CHAR_MAPPER = "char_map.json"
-
+    NGRAM_PROBS = "ngram_probs.npy"
+    DICTIONARY = "dictionary.npy"
 
 def download_hub_file(file_name:str):
     from huggingface_hub.file_download import hf_hub_download
@@ -22,7 +23,7 @@ def download_hub_file(file_name:str):
     )
 
 def load_char_mapper():
-    char_mapper_fp = download_hub_file(Filename.CHAR_MAPPER.value)
+    char_mapper_fp = download_hub_file(Filenames.CHAR_MAPPER.value)
     if Path(char_mapper_fp).is_file():
         with open(char_mapper_fp, "r") as f:
             char_mapper = json.load(f)
@@ -35,13 +36,13 @@ def load_char_mapper():
 
 
 def load_default_vocab_map():
-    file_path = download_hub_file(Filename.VOCAB.value)
+    file_path = download_hub_file(Filenames.VOCAB.value)
     with open(file_path, "r") as f:
         vocab_map = json.load(f)
     return vocab_map
 
 def load_default_config():
-    file_path = download_hub_file(Filename.CONFIG.value)
+    file_path = download_hub_file(Filenames.CONFIG.value)
     with open(file_path, "r") as f:
         config = json.load(f)
     return config

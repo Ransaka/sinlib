@@ -8,3 +8,4 @@ examples/vocab.json
 experiments/experiments.ipynb
 experiments/test.py
 experiments/*
+.qodo

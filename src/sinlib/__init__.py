@@ -17,15 +17,14 @@ from sinlib.romanize import Romanizer
 from sinlib.tokenizer import Tokenizer
 from sinlib.transliterate import Transliterator
 from sinlib.utils import preprocessing
-
-# Define package resources directory
-RESOURCES_DIR: str = path.join(path.dirname(__file__), 'data')
+from sinlib.spellcheck import TypoDetector
 
 __all__: List[str] = [
     "Tokenizer",
     "preprocessing",
     "Romanizer",
-    "Transliterator"
+    "Transliterator",
+    "TypoDetector"
 ]
 
 __version__ = "0.1.8"

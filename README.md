@@ -78,6 +78,21 @@ print(ratios)
 # Output: [0.9, 0.46875, 0.0]
 ```
 
+### Spell Checker (beta)
+
+Detect typos and get spelling suggestions for Sinhala words using n gram models:
+```python 
+from sinlib.spellcheck import TypoDetector
+
+# Initialize the typo detector
+typo_detector = TypoDetector()
+
+# Check spelling of a word
+result = typo_detector.check_spelling("අඩිරාජයාගේ")
+print(result) # ['අධිරාජයාගේ', 'අධිරාජ්\u200dයයාගේ', 'අධිරාජයා']
+# Output: Either the word itself if correct, or a list of suggestions if it's a potential typo
+```
+
 ### Romanizer
 
 Convert Sinhala text to Roman characters:
