@@ -197,7 +197,7 @@ class Tokenizer:
         # Create reverse mapping
         self.token_id_to_token_map = {v: k for k, v in self.vocab_map.items()}
 
-    def load_from_pretrained(self, file_path: str, load_default_tokenizer:bool = False) -> 'Tokenizer':
+    def load_from_pretrained(self, file_path: Union[str, None] = None, load_default_tokenizer:bool = True) -> 'Tokenizer':
         """Load tokenizer from pretrained files."""
 
         if load_default_tokenizer and (file_path is not None):
@@ -205,7 +205,6 @@ class Tokenizer:
         
         if load_default_tokenizer:
             self.__load_default_tokenizer()
-            return self
         
         try:
             file_path = Path(file_path)
