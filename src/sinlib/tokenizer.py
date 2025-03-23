@@ -205,6 +205,7 @@ class Tokenizer:
         
         if load_default_tokenizer:
             self.__load_default_tokenizer()
+            return
         
         try:
             file_path = Path(file_path)

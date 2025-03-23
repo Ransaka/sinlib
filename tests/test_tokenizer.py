@@ -37,7 +37,7 @@ def test_save_load_tokenizer(tmp_path):
     tokenizer.save_tokenizer(save_path)
     
     new_tokenizer = Tokenizer(max_length=30)
-    new_tokenizer.load_from_pretrained(save_path)
+    new_tokenizer.load_from_pretrained(save_path, load_default_tokenizer=False)
     
     assert new_tokenizer.vocab_map == tokenizer.vocab_map
     assert new_tokenizer.pad_token_id == tokenizer.pad_token_id

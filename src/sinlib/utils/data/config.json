@@ -1,9 +1,0 @@
-{
-    "unknown_token": "<|unk|>",
-    "pad_token": "<|pad|>",
-    "unknown_token_id": 1015,
-    "pad_token_id": 1016,
-    "max_length": 256,
-    "end_of_text_token": "<|endoftext|>",
-    "end_of_text_token_id": 1017
-}

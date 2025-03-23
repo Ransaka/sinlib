@@ -1,9 +1,9 @@
 
-# Sinlib
+# SINLIB
 
 <div align="center">
 
-![Sinlib Logo](sinlib.png)
+![Sinlib Logo](welcome.png)
 
 [![PyPI version](https://badge.fury.io/py/sinlib.svg)](https://badge.fury.io/py/sinlib)
 [![Python Versions](https://img.shields.io/pypi/pyversions/sinlib.svg)](https://pypi.org/project/sinlib/)
@@ -18,9 +18,9 @@ Sinlib is a specialized Python library designed for processing and analyzing Sin
 
 ## Features
 
-- 🔤 **Tokenizer**: Advanced tokenization for Sinhala text
-- 🔍 **Preprocessor**: Text preprocessing utilities including Sinhala character ratio analysis
-- 🔄 **Romanizer**: Convert Sinhala text to Roman characters
+- **Tokenizer**: Tokenization for Sinhala text
+- **Preprocessor**: Text preprocessing utilities including Sinhala character ratio analysis
+- **Romanizer**: Convert Sinhala text to Roman characters
 
 ## Installation
 
