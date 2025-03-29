@@ -66,7 +66,7 @@ def test_dictionary_property(mock_typo_detector, mock_dictionary):
 def test_get_dictionary(mock_typo_detector, mock_dictionary):
     """Test get_dictionary returns the full dictionary."""
     dictionary = mock_typo_detector.get_dictionary()
-    assert isinstance(dictionary, list)
+    assert isinstance(dictionary, set)
     assert len(dictionary) == len(mock_dictionary)
     assert set(dictionary) == set(mock_dictionary)
 
@@ -121,7 +121,7 @@ def test_suggest_correction(mock_typo_detector, mock_dictionary):
 def test_check_spelling_correct_word(mock_typo_detector):
     """Test check_spelling with a correctly spelled word."""
     mock_typo_detector._dictionary = ["correct"]
-    result = mock_typo_detector.check_spelling("correct")
+    result = mock_typo_detector("correct")
     assert result == "correct"
 
 
@@ -135,8 +135,8 @@ def test_check_spelling_typo(mock_typo_detector):
     # Mock suggest_correction
     mock_typo_detector.suggest_correction = lambda word, n=3: ["correct"]
     
-    result = mock_typo_detector.check_spelling("incorrekt")
-    assert result == ["correct"]
+    result = mock_typo_detector("incorrekt")
+    assert result == "correct"
 
 
 def test_check_spelling_unusual_word(mock_typo_detector):
@@ -147,7 +147,7 @@ def test_check_spelling_unusual_word(mock_typo_detector):
     mock_typo_detector.word_ngram_probability = lambda word, n=2: 1e-7
     
     with warnings.catch_warnings(record=True) as w:
-        result = mock_typo_detector.check_spelling("uncommon")
+        result = mock_typo_detector("uncommon")
         assert result == "uncommon"
         assert len(w) == 1
         assert "unusual but may not be a typo" in str(w[0].message)

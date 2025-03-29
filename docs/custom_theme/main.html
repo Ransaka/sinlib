@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <meta name="description" content="Sinlib - A Python library for processing and analyzing Sinhala text">
+  <meta name="keywords" content="Sinhala, NLP, tokenization, transliteration, romanization, Python">
+  <meta name="author" content="Ransaka Ravihara">
+  <meta property="og:title" content="Sinlib Documentation">
+  <meta property="og:description" content="A specialized Python library designed for processing and analyzing Sinhala text">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sinlib Documentation">
+  <meta name="twitter:description" content="A specialized Python library designed for processing and analyzing Sinhala text">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{% endblock %}
+
+{% block content %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add class to Sinhala text examples
+      const sinhalaRegex = /[\u0D80-\u0DFF]+/;
+      document.querySelectorAll('p, li, code').forEach(element => {
+        if (sinhalaRegex.test(element.textContent)) {
+          element.classList.add('sinhala-text');
+        }
+      });
+      
+      // Add styling to code outputs
+      document.querySelectorAll('pre + pre').forEach(element => {
+        if (!element.querySelector('.language-python')) {
+          element.classList.add('code-output');
+        }
+      });
+    });
+  </script>
+{% endblock %}

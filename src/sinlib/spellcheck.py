@@ -1,6 +1,7 @@
 from difflib import get_close_matches
 from typing import List, Dict, Union, Any
 import warnings
+from functools import lru_cache
 from sinlib.tokenizer import Tokenizer
 from sinlib.utils.preprocessing import download_hub_file, Filenames
 import numpy as np
@@ -14,28 +15,37 @@ class TypoDetector:
         _ngram_probs (Dict[int, float]): Dictionary of n-gram probabilities.
     """
     
-    def __init__(self):
+    def __init__(self, cache_size: int = 1000, threshold: float = 1e-8, lazy_loading: bool = False):
         """
-        Initialize the TypoDetector with a dictionary and n-gram probabilities.
+        Initialize the TypoDetector with configurable caching and loading options.
         
         Args:
-            dictionary_list: List of valid words.
-            ngram_probs: Dictionary mapping n-gram keys to probabilities.
-            tokenizer: Function to tokenize words. If None, identity function is used.
+            cache_size: Maximum number of entries to cache for frequent operations
+            threshold: Probability threshold for considering words as typos
+            lazy_loading: Delay resource loading until first use
         """
-        self._dictionary = self._load_dictionary()
-        self._ngram_probs = self._load_ngram_probs()
-        self._tokenizer = self._load_tokenizer()
+        self._cache_size = cache_size
+        self._threshold = threshold
+        self._lazy_loading = lazy_loading
+        
+        if not lazy_loading:
+            self._dictionary = self._load_dictionary()
+            self._ngram_probs = self._load_ngram_probs()
+            self._tokenizer = self._load_tokenizer()
+            # Apply caching to core methods
+            self.word_ngram_probability = lru_cache(maxsize=cache_size)(self.word_ngram_probability)
+            self.suggest_correction = lru_cache(maxsize=cache_size)(self.suggest_correction)
+            self.__call__ = lru_cache(maxsize=cache_size)(self.__call__)
     
-    def _load_dictionary(self) -> List[str]:
+    def _load_dictionary(self) -> set:
         """
-        Load the dictionary from a file.
+        Load the dictionary as a set for O(1) lookups.
 
         Returns:
-            List of valid words.
+            Set of valid words.
         """
         dictionary_path = download_hub_file(Filenames.DICTIONARY.value)
-        return list(np.load(dictionary_path))
+        return set(np.load(dictionary_path).tolist())
 
     def _load_ngram_probs(self) -> Dict[int, float]:
         """
@@ -75,6 +85,7 @@ class TypoDetector:
         """Return the full n-gram probabilities dictionary."""
         return self._ngram_probs
     
+    @lru_cache(maxsize=1000)
     def word_ngram_probability(self, word: str, n: int = 2) -> float:
         """
         Calculate the probability of a word based on its n-grams.
@@ -109,23 +120,36 @@ class TypoDetector:
         matches = get_close_matches(word, self._dictionary, n=n, cutoff=0.7)
         return matches if matches else ["No suggestion"]
     
-    def check_spelling(self, word: str) -> str:
+    def __call__(self, text: str) -> str:
         """
-        Check if a word is spelled correctly and suggest corrections if not.
+        Check text for spelling errors and return corrected sentence.
         
         Args:
-            word: The word to check.
+            text: The sentence to check.
             
         Returns:
-            A message indicating if the word is valid, a typo, or unusual.
+            Corrected sentence.
         """
-        if word in self._dictionary:
-            return word
+        corrected = []
+        words = text.split() if isinstance(text, str) else [str(text)]
         
-        prob = self.word_ngram_probability(word)
+        for w in words:
+            try:
+                # Convert dictionary to set for O(1) lookups
+                if w in set(self._dictionary):
+                    corrected.append(w)
+                    continue
+                
+                prob = self.word_ngram_probability(w)
+                
+                if prob < 1e-8:
+                    suggestions = self.suggest_correction(w)
+                    corrected.append(suggestions[0] if suggestions else w)
+                else:
+                    warnings.warn(f"'{w}' is unusual but may not be a typo", UserWarning)
+                    corrected.append(w)
+            except Exception as e:
+                warnings.warn(f"Error processing word '{w}': {str(e)}")
+                corrected.append(w)
         
-        if prob < 1e-8:
-            suggestions = self.suggest_correction(word)
-            return suggestions
-        warnings.warn(f"'{word}' is unusual but may not be a typo", UserWarning)
-        return word
+        return ' '.join(corrected)

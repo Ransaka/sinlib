@@ -1,0 +1,179 @@
+/* Custom styles for Sinlib documentation */
+
+/* Typography improvements */
+body {
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #424242;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 500;
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  color: #212121;
+}
+
+h1 {
+  font-size: 2.25rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.3em;
+}
+
+h2 {
+  font-size: 1.8rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.2em;
+}
+
+/* Links */
+a {
+  color: #3f51b5;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #5c6bc0;
+  text-decoration: underline;
+}
+
+/* Code blocks */
+pre, code {
+  font-family: 'Fira Code', 'Roboto Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.95em;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+pre {
+  padding: 1em;
+  background-color: #f8f9fa;
+  border-left: 4px solid #3f51b5;
+}
+
+code {
+  background-color: rgba(63, 81, 181, 0.1);
+  color: #3f51b5;
+  padding: 0.2em 0.4em;
+  padding: 0.2em 0.4em;
+  font-size: 0.9em;
+}
+
+pre {
+  padding: 1em;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  overflow: auto;
+}
+
+pre code {
+  background-color: transparent;
+  color: #424242;
+  padding: 0;
+}
+
+/* Sinhala text styling */
+.sinhala-text {
+  font-family: 'Noto Sans Sinhala', sans-serif;
+  line-height: 1.8;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  overflow: auto;
+}
+
+table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.75em 1em;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+table td {
+  padding: 0.75em 1em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Blockquotes */
+blockquote {
+  border-left: 4px solid #3f51b5;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #616161;
+  font-style: italic;
+}
+
+/* Lists */
+ul, ol {
+  padding-left: 2em;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+/* Admonitions (notes, warnings) */
+.admonition {
+  padding: 1em;
+  margin: 1.5em 0;
+  border-radius: 4px;
+  border-left: 4px solid #3f51b5;
+  background-color: rgba(63, 81, 181, 0.1);
+}
+
+.admonition.warning {
+  border-left-color: #ff9800;
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.admonition.danger {
+  border-left-color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.admonition.tip {
+  border-left-color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  .md-grid {
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+/* Fix for code block overflow */
+.md-typeset .highlight {
+  overflow-x: auto;
+}
+
+/* Improve code copy button */
+.md-clipboard {
+  color: rgba(0, 0, 0, 0.26);
+  transition: color 0.2s ease;
+}
+
+.md-clipboard:hover {
+  color: rgba(0, 0, 0, 0.54);
+}

@@ -1,0 +1,57 @@
+/* Google Fonts integration */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Abhaya+Libre:wght@400;500;600;700&display=swap');
+
+/* Additional styling for Sinhala examples */
+.sinhala-example {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+  border-left: 4px solid #3f51b5;
+  font-family: 'Noto Sans Sinhala', sans-serif;
+}
+
+/* Styling for code output */
+.code-output {
+  background-color: #f5f5f5;
+  border-left: 4px solid #4caf50;
+  padding: 0.5em 1em;
+  margin-top: -1em;
+  margin-bottom: 1em;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9em;
+  color: #212121;
+}
+
+/* Styling for API documentation */
+.api-section {
+  margin: 2em 0;
+  padding: 1em;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.api-section h3 {
+  margin-top: 0;
+  color: #3f51b5;
+}
+
+/* Improve navigation */
+.md-nav__link:hover {
+  color: #3f51b5;
+}
+
+.md-nav__link--active {
+  color: #3f51b5;
+  font-weight: 500;
+}
+
+/* Footer styling */
+.md-footer {
+  background-color: #3f51b5;
+}
+
+.md-footer-meta {
+  background-color: #303f9f;
+}
