@@ -27,4 +27,4 @@ __all__: List[str] = [
     "TypoDetector"
 ]
 
-__version__ = "0.1.9"
+__version__ = "0.1.9.1"
