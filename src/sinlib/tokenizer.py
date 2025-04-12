@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 import concurrent.futures
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .utils.preprocessing import process_text, load_default_vocab_map, load_default_config
 
@@ -29,7 +29,7 @@ class Tokenizer:
         self.unknown_token: str = unknown_token
         self.pad_token: str = pad_token
         self.end_of_text_token: str = end_of_text_token
-        self.special_tokens: List[str] = [self.unknown_token, self.pad_token]
+        self.special_tokens: List[str] = [self.pad_token, self.unknown_token, self.end_of_text_token]
         
         # Configuration
         self.max_length: int = max_length
@@ -51,8 +51,9 @@ class Tokenizer:
         self,
         text: str,
         truncate_and_pad: bool,
-        allowed_special_tokens: List[str] = []
-    ) -> List[int]:
+        allowed_special_tokens: List[str] = [],
+        return_attention_mask: bool = False
+    ) -> Union[List[int], Dict[str, List[int]]]:
         """Encode text into token IDs."""
         if not self.vocab_map:
             raise ValueError("Tokenizer not trained. Call train() first.")
@@ -73,11 +74,15 @@ class Tokenizer:
             if len(text.split(self.end_of_text_token)) > 1:
                 text_encodings.append(self.end_of_text_token_id)
 
-        return (
-            self.pad_or_truncate(text_encodings, self.max_length, self.pad_token_id)
-            if truncate_and_pad
-            else text_encodings
-        )
+        if truncate_and_pad:
+            text_encodings = self.pad_or_truncate(text_encodings, self.max_length, self.pad_token_id)
+        
+        if return_attention_mask:
+            # Create attention mask (1 for tokens, 0 for padding)
+            attention_mask = [1 if token != self.pad_token_id else 0 for token in text_encodings]
+            return {"input_ids": text_encodings, "attention_mask": attention_mask}
+            
+        return text_encodings
 
     @staticmethod
     def pad_or_truncate(sequence: List[int], max_length: int, padding_value: int) -> List[int]:
@@ -90,15 +95,38 @@ class Tokenizer:
         self,
         text: str,
         truncate_and_pad: bool = False,
-        allowed_special_tokens: List[str] = []
-    ) -> List[int]:
-        """Make the class callable for easy encoding."""
-        return self.__encode(text, truncate_and_pad, allowed_special_tokens)
+        allowed_special_tokens: List[str] = [],
+        return_attention_mask: bool = False
+    ) -> Union[List[int], Dict[str, List[int]]]:
+        """Make the class callable for easy encoding.
+        
+        Args:
+            text: Input text to tokenize
+            truncate_and_pad: Whether to truncate or pad sequences to max_length
+            allowed_special_tokens: Special tokens that are allowed in the output
+            return_attention_mask: Whether to return attention mask along with token IDs
+            
+        Returns:
+            Either a list of token IDs or a dictionary with 'input_ids' and 'attention_mask'
+        """
+        return self.__encode(text, truncate_and_pad, allowed_special_tokens, return_attention_mask)
 
-    def decode(self, ids: List[int], skip_special_tokens: bool = False) -> str:
-        """Decode token IDs back to text."""
+    def decode(self, ids: Union[List[int], Dict[str, List[int]]], skip_special_tokens: bool = False) -> str:
+        """Decode token IDs back to text.
+        
+        Args:
+            ids: Either a list of token IDs or a dictionary with 'input_ids' key
+            skip_special_tokens: Whether to skip special tokens during decoding
+            
+        Returns:
+            The decoded text
+        """
         if not self.token_id_to_token_map:
             raise ValueError("Tokenizer not trained. Call train() first.")
+
+        # Handle case when input is a dictionary (from tokenizer with return_attention_mask=True)
+        if isinstance(ids, dict) and "input_ids" in ids:
+            ids = ids["input_ids"]
 
         special_token_ids = [self.vocab_map[tok] for tok in self.special_tokens]
         tokens = [
@@ -183,16 +211,22 @@ class Tokenizer:
     def __build_vocab_from_chars(self, unique_chars: Set[str]) -> None:
         """Build vocabulary from unique characters."""
         self.unique_chars = unique_chars
-        self.vocab_map = {char: idx for idx, char in enumerate(unique_chars)}
         
-        # Add special tokens
-        for token in [self.unknown_token, self.pad_token, self.end_of_text_token]:
-            self.vocab_map[token] = len(self.vocab_map)
+        # Start with special tokens at the beginning of vocabulary (IDs 0, 1, 2, etc.)
+        self.vocab_map = {}
+        special_tokens = [self.pad_token, self.unknown_token, self.end_of_text_token]
+        for idx, token in enumerate(special_tokens):
+            self.vocab_map[token] = idx
+        
+        # Add regular characters after special tokens
+        for char in unique_chars:
+            if char not in self.vocab_map:  # Skip if already in vocab (e.g., if a special token appears in text)
+                self.vocab_map[char] = len(self.vocab_map)
         
         # Set token IDs
-        self.unknown_token_id = self.vocab_map[self.unknown_token]
-        self.pad_token_id = self.vocab_map[self.pad_token]
-        self.end_of_text_token_id = self.vocab_map[self.end_of_text_token]
+        self.pad_token_id = self.vocab_map[self.pad_token]  # Should be 0
+        self.unknown_token_id = self.vocab_map[self.unknown_token]  # Should be 1
+        self.end_of_text_token_id = self.vocab_map[self.end_of_text_token]  # Should be 2
         
         # Create reverse mapping
         self.token_id_to_token_map = {v: k for k, v in self.vocab_map.items()}

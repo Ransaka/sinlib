@@ -9,3 +9,4 @@ experiments/experiments.ipynb
 experiments/test.py
 experiments/*
 *.ipynb
+.qodo
