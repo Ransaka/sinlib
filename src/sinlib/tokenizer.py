@@ -22,14 +22,16 @@ class Tokenizer:
         max_length: int,
         unknown_token: str = "<|unk|>",
         pad_token: str = "<|pad|>",
-        end_of_text_token: str = "<|end_of_text|>"
+        end_of_text_token: str = "<|end_of_text|>",
+        bos_token: str = "<|bos|>"
     ) -> None:
         """Initialize the tokenizer with specified parameters."""
         # Special tokens
         self.unknown_token: str = unknown_token
         self.pad_token: str = pad_token
         self.end_of_text_token: str = end_of_text_token
-        self.special_tokens: List[str] = [self.pad_token, self.unknown_token, self.end_of_text_token]
+        self.bos_token: str = bos_token
+        self.special_tokens: List[str] = [self.pad_token, self.unknown_token, self.end_of_text_token, self.bos_token]
         
         # Configuration
         self.max_length: int = max_length
@@ -42,6 +44,7 @@ class Tokenizer:
         self.unknown_token_id: Optional[int] = None
         self.pad_token_id: Optional[int] = None
         self.end_of_text_token_id: Optional[int] = None
+        self.bos_token_id: Optional[int] = None
         
         # Training state
         self.tokenized_chars: List[str] = []
@@ -52,7 +55,8 @@ class Tokenizer:
         text: str,
         truncate_and_pad: bool,
         allowed_special_tokens: List[str] = [],
-        return_attention_mask: bool = False
+        return_attention_mask: bool = False,
+        add_bos_token: bool = False
     ) -> Union[List[int], Dict[str, List[int]]]:
         """Encode text into token IDs."""
         if not self.vocab_map:
@@ -60,6 +64,10 @@ class Tokenizer:
 
         allowed_token_ids = [self.vocab_map[tok] for tok in allowed_special_tokens]
         text_encodings: List[int] = []
+        
+        # Add BOS token at the beginning if requested
+        if add_bos_token:
+            text_encodings.append(self.bos_token_id)
         
         for part in text.split(self.end_of_text_token):
             processed_text = self.__process_text(part)
@@ -96,7 +104,8 @@ class Tokenizer:
         text: str,
         truncate_and_pad: bool = False,
         allowed_special_tokens: List[str] = [],
-        return_attention_mask: bool = False
+        return_attention_mask: bool = False,
+        add_bos_token: bool = False
     ) -> Union[List[int], Dict[str, List[int]]]:
         """Make the class callable for easy encoding.
         
@@ -105,11 +114,12 @@ class Tokenizer:
             truncate_and_pad: Whether to truncate or pad sequences to max_length
             allowed_special_tokens: Special tokens that are allowed in the output
             return_attention_mask: Whether to return attention mask along with token IDs
+            add_bos_token: Whether to add the beginning-of-sequence token at the start
             
         Returns:
             Either a list of token IDs or a dictionary with 'input_ids' and 'attention_mask'
         """
-        return self.__encode(text, truncate_and_pad, allowed_special_tokens, return_attention_mask)
+        return self.__encode(text, truncate_and_pad, allowed_special_tokens, return_attention_mask, add_bos_token)
 
     def decode(self, ids: Union[List[int], Dict[str, List[int]]], skip_special_tokens: bool = False) -> str:
         """Decode token IDs back to text.
@@ -138,6 +148,54 @@ class Tokenizer:
             self.token_id_to_token_map.get(token, self.unknown_token)
             for token in tokens
         )
+        
+    def batch_encode(
+        self,
+        texts: List[str],
+        truncate_and_pad: bool = False,
+        allowed_special_tokens: List[str] = [],
+        return_attention_mask: bool = False,
+        add_bos_token: bool = False
+    ) -> Union[List[List[int]], List[Dict[str, List[int]]]]:
+        """Encode multiple texts into token IDs.
+        
+        Args:
+            texts: List of input texts to tokenize
+            truncate_and_pad: Whether to truncate or pad sequences to max_length
+            allowed_special_tokens: Special tokens that are allowed in the output
+            return_attention_mask: Whether to return attention mask along with token IDs
+            add_bos_token: Whether to add the beginning-of-sequence token at the start
+            
+        Returns:
+            Either a list of token ID lists or a list of dictionaries with 'input_ids' and 'attention_mask'
+        """
+        if not self.vocab_map:
+            raise ValueError("Tokenizer not trained. Call train() first.")
+            
+        results = []
+        for text in texts:
+            results.append(self.__encode(text, truncate_and_pad, allowed_special_tokens, return_attention_mask, add_bos_token))
+            
+        return results
+        
+    def batch_decode(self, batch_ids: Union[List[List[int]], List[Dict[str, List[int]]]], skip_special_tokens: bool = False) -> List[str]:
+        """Decode multiple sequences of token IDs back to text.
+        
+        Args:
+            batch_ids: Either a list of token ID lists or a list of dictionaries with 'input_ids' key
+            skip_special_tokens: Whether to skip special tokens during decoding
+            
+        Returns:
+            List of decoded texts
+        """
+        if not self.token_id_to_token_map:
+            raise ValueError("Tokenizer not trained. Call train() first.")
+            
+        results = []
+        for ids in batch_ids:
+            results.append(self.decode(ids, skip_special_tokens))
+            
+        return results
 
     def train(
         self,
@@ -214,7 +272,7 @@ class Tokenizer:
         
         # Start with special tokens at the beginning of vocabulary (IDs 0, 1, 2, etc.)
         self.vocab_map = {}
-        special_tokens = [self.pad_token, self.unknown_token, self.end_of_text_token]
+        special_tokens = [self.pad_token, self.unknown_token, self.end_of_text_token, self.bos_token]
         for idx, token in enumerate(special_tokens):
             self.vocab_map[token] = idx
         
@@ -227,6 +285,7 @@ class Tokenizer:
         self.pad_token_id = self.vocab_map[self.pad_token]  # Should be 0
         self.unknown_token_id = self.vocab_map[self.unknown_token]  # Should be 1
         self.end_of_text_token_id = self.vocab_map[self.end_of_text_token]  # Should be 2
+        self.bos_token_id = self.vocab_map[self.bos_token]  # Should be 3
         
         # Create reverse mapping
         self.token_id_to_token_map = {v: k for k, v in self.vocab_map.items()}
@@ -272,6 +331,7 @@ class Tokenizer:
         self.unknown_token_id = self.vocab_map[self.unknown_token]
         self.pad_token_id = self.vocab_map[self.pad_token]
         self.end_of_text_token_id = self.vocab_map[self.end_of_text_token]
+        self.bos_token_id = self.vocab_map[self.bos_token]
 
     def save_tokenizer(self, save_path: str) -> None:
         """Save tokenizer configuration and vocabulary."""
@@ -286,6 +346,8 @@ class Tokenizer:
             "max_length": self.max_length,
             "end_of_text_token": self.end_of_text_token,
             "end_of_text_token_id": self.end_of_text_token_id,
+            "bos_token": self.bos_token,
+            "bos_token_id": self.bos_token_id,
         }
 
         try:

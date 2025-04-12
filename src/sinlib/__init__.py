@@ -5,7 +5,7 @@ This library provides tools for tokenization, romanization, and transliteration
 of Sinhala text, along with various preprocessing utilities.
 
 Available Classes:
-    - Tokenizer: For tokenizing Sinhala text
+    - Tokenizer: For tokenizing Sinhala text (supports batch processing)
     - Romanizer: For converting Sinhala text to Roman characters
     - Transliterator: For transliterating between scripts
 """
@@ -27,4 +27,4 @@ __all__: List[str] = [
     "TypoDetector"
 ]
 
-__version__ = "0.1.9.2"
+__version__ = "0.1.9.3"
