@@ -1,7 +1,7 @@
 from functools import partial
 import multiprocessing
 import re
-from .chars import VOWEL_DIACRITICS, NUBERS_AND_PUNKTS, ALL_LETTERS
+from .chars import VOWEL_DIACRITICS, NUMBERS_AND_PUNCTUATION, ALL_LETTERS
 import json
 from pathlib import Path
 from enum import Enum
@@ -83,27 +83,76 @@ def remove_english_characters(text):
 #     return cleaned_string
 
 
-def process_text(t):
-    tokenized_chars = []
+# def process_text(t):
+#     tokenized_chars = []
 
-    for i, char in enumerate(t):
-        if char in VOWEL_DIACRITICS:
-            continue
-        if char in NUBERS_AND_PUNKTS:
-            tokenized_chars.append(char)
-        elif char == " ":
-            tokenized_chars.append(" ")
-        elif char in ALL_LETTERS:
-            if i < len(t) - 1 and t[i + 1] in ALL_LETTERS:
-                tokenized_chars.append(char)
-            elif i < len(t) - 1 and t[i + 1] in VOWEL_DIACRITICS:
-                tokenized_chars.append(char + t[i + 1])
+#     for i, char in enumerate(t):
+#         if char in VOWEL_DIACRITICS:
+#             continue
+#         if char in NUMBERS_AND_PUNCTUATION:
+#             tokenized_chars.append(char)
+#         elif char == " ":
+#             if i < len(t) - 1 and t[i + 1] in VOWEL_DIACRITICS+list(ALL_LETTERS):
+#                 tokenized_chars[-1] = tokenized_chars[-1] + " " # space between words
+#             else:
+#                 tokenized_chars.append(char)
+#         elif char in ALL_LETTERS:
+#             if i < len(t) - 1 and t[i + 1] in ALL_LETTERS:
+#                 tokenized_chars.append(char)
+#             elif i < len(t) - 1 and t[i + 1] in VOWEL_DIACRITICS:
+#                 tokenized_chars.append(char + t[i + 1])
+#             else:
+#                 tokenized_chars.append(char)
+#         else:
+#             tokenized_chars.append(char)
+
+#     return tokenized_chars
+
+def process_text(text: str) -> list[str]:
+    """
+    Tokenizes text by combining consonants with diacritics and joining a 
+    space to the preceding token if it's followed by a letter.
+
+    Args:
+        text: The input string to tokenize.
+
+    Returns:
+        A list of string tokens. Each token is either a single character,
+        a combination of a letter and a diacritic, or a space.
+    """
+    if not isinstance(text, str):
+        raise TypeError("Input must be a string.")
+
+    tokens = []
+    i = 0
+    n = len(text)
+
+    while i < n:
+        char = text[i]
+
+        if char == ' ':
+            # Check if the list is not empty AND if the space is followed by a letter/diacritic
+            if tokens and i + 1 < n and text[i + 1] in VOWEL_DIACRITICS + list(ALL_LETTERS):
+                # Safely append the space to the last token
+                tokens[-1] += ' '
             else:
-                tokenized_chars.append(char)
+                # Otherwise, treat the space as a separate token
+                tokens.append(char)
+            i += 1
+        
+        # Logic for combining a letter with a following diacritic
+        elif char in ALL_LETTERS:
+            if i + 1 < n and text[i + 1] in VOWEL_DIACRITICS:
+                tokens.append(char + text[i + 1])
+                i += 2  # Consumed two characters
+            else:
+                tokens.append(char)
+                i += 1  # Consumed one character
         else:
-            tokenized_chars.append(char)
+            tokens.append(char)
+            i += 1
 
-    return tokenized_chars
+    return tokens
 
 
 def process_text_with_token_counts(
@@ -147,7 +196,7 @@ def process_text_with_token_counts(
     for i, char in enumerate(t):
         if char in VOWEL_DIACRITICS:
             continue
-        if (char in NUBERS_AND_PUNKTS) and (ignore_punctuation_and_numbers):
+        if (char in NUMBERS_AND_PUNCTUATION) and (ignore_punctuation_and_numbers):
             tokenized_chars.append(char)
             token_counts += 1
         elif char == " ":

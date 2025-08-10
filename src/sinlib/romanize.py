@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from .tokenizer import Tokenizer
-from .utils.chars import ALL_SINHALA_CHARACTERS, NUBERS_AND_PUNKTS
+from .utils.chars import ALL_SINHALA_CHARACTERS, NUMBERS_AND_PUNCTUATION
 from .utils.preprocessing import load_char_mapper, remove_non_printable
 
 
@@ -71,7 +71,7 @@ class Romanizer:
         
         # Create mask for Sinhala characters and allowed punctuation
         sinhala_mask = [
-            char in ALL_SINHALA_CHARACTERS + list(NUBERS_AND_PUNKTS) + [" "]
+            char in ALL_SINHALA_CHARACTERS + list(NUMBERS_AND_PUNCTUATION) + [" "]
             for char in chars
         ]
         
@@ -86,7 +86,7 @@ class Romanizer:
         
         # Convert to Roman characters
         romanized_chars = [
-            self.char_mapper.get(ch, ch if ch in NUBERS_AND_PUNKTS.union({" "}) else '')
+            self.char_mapper.get(ch, ch if ch in NUMBERS_AND_PUNCTUATION.union({" "}) else '')
             for ch in decoded_chars
         ]
         romanized_sinhala = "".join(romanized_chars)
