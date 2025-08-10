@@ -10,3 +10,4 @@ experiments/test.py
 experiments/*
 *.ipynb
 .qodo
+examples/examples.ipynb

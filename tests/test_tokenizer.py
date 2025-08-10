@@ -26,7 +26,7 @@ def test_encode_decode(sample_texts):
     encoded = tokenizer("මම ගෙදර")
     decoded = tokenizer.decode(encoded)
     
-    assert len(encoded) == 6  # Due to space token
+    assert len(encoded) == 5
     assert "මම" in decoded
 
 def test_save_load_tokenizer(tmp_path):

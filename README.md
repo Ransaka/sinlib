@@ -12,6 +12,8 @@
 A Python library for Sinhala text processing and analysis
 </div>
 
+> **Note:** The `Romanizer` and `Transliterator` modules are temporarily unavailable due to a potential bug. We are working to resolve this and will restore them in a future update.
+
 ## Overview
 
 Sinlib is a specialized Python library designed for processing and analyzing Sinhala text. It provides tools for tokenization, preprocessing, and romanization to facilitate natural language processing tasks for the Sinhala language.
@@ -88,7 +90,7 @@ from sinlib.spellcheck import TypoDetector
 typo_detector = TypoDetector()
 
 # Check spelling of a word
-result = typo_detector.check_spelling("අඩිරාජයාගේ")
+result = typo_detector("අඩිරාජයාගේ")
 print(result) # ['අධිරාජයාගේ', 'අධිරාජ්\u200dයයාගේ', 'අධිරාජයා']
 # Output: Either the word itself if correct, or a list of suggestions if it's a potential typo
 ```
