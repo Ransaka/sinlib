@@ -1,6 +1,6 @@
 [project]
 name = "sinlib"
-version = "0.1.10"
+version = "0.1.11"
 description = "Sinhala NLP Toolkit"
 authors = [
     { name = "Ransaka", email = "ransaka.ravihara@gmail.com" }
@@ -13,7 +13,7 @@ dependencies = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">= 3.9.7, <=3.12"
+requires-python = ">= 3.9.7"
 keywords = ["NLP","Sinhala", "python"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
