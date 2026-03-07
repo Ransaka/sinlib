@@ -1,5 +1,4 @@
-
-# SINLIB
+# Sinlib
 
 <div align="center">
 
@@ -8,132 +7,104 @@
 [![PyPI version](https://badge.fury.io/py/sinlib.svg)](https://badge.fury.io/py/sinlib)
 [![Python Versions](https://img.shields.io/pypi/pyversions/sinlib.svg)](https://pypi.org/project/sinlib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-readthedocs-blue.svg)](https://sinlib.readthedocs.io)
 
-A Python library for Sinhala text processing and analysis
+A Python toolkit for Sinhala natural language processing — phonological tokenization, spell checking, and text preprocessing.
+
 </div>
 
-> **Note:** The `Romanizer` and `Transliterator` modules are temporarily unavailable due to a potential bug. We are working to resolve this and will restore them in a future update.
-
-## Overview
-
-Sinlib is a specialized Python library designed for processing and analyzing Sinhala text. It provides tools for tokenization, preprocessing, and romanization to facilitate natural language processing tasks for the Sinhala language.
-
-## Features
-
-- **Tokenizer**: Tokenization for Sinhala text
-- **Preprocessor**: Text preprocessing utilities including Sinhala character ratio analysis
-- **Romanizer**: Convert Sinhala text to Roman characters
+> **Note:** The `Romanizer` and `Transliterator` modules are temporarily unavailable due to a known bug and will be restored in a future release.
 
 ## Installation
-
-Install the latest stable version from PyPI:
 
 ```bash
 pip install sinlib
 ```
 
-## Usage Examples
+## Quick Start
 
-### Tokenizer
-
-Split Sinhala text into meaningful tokens:
+### Tokenization
 
 ```python
 from sinlib import Tokenizer
 
-# Sample Sinhala text
-corpus = """මේ අතර, පෙබරවාරි මාසයේ පළමු දින 08 තුළ පමණක් විදෙස් සංචාරකයන් 60,122 දෙනෙකු මෙරටට පැමිණ තිබේ.
-ඒ අනුව මේ වසරේ ගත වූ කාලය තුළ සංචාරකයන් 268‍,375 දෙනෙකු දිවයිනට පැමිණ ඇති බව සංචාරක සංවර්ධන අධිකාරිය සඳහන් කරයි.
-ඉන් වැඩි ම සංචාරකයන් පිරිසක් ඉන්දියාවෙන් පැමිණ ඇති අතර, එම සංඛ්‍යාව 42,768කි.
-ඊට අමතර ව රුසියාවෙන් සංචාරකයන් 39,914ක්, බ්‍රිතාන්‍යයෙන් 22,278ක් සහ ජර්මනියෙන් සංචාරකයන් 18,016 දෙනෙකු පැමිණ ඇති බව වාර්තා වේ."""
+tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
 
-# Initialize and train the tokenizer
-tokenizer = Tokenizer()
-tokenizer.train([corpus])
+# Split into phonological units (base consonant + diacritics)
+tokens = tokenizer.tokenize("ආයුබෝවන්")
+# ['ආ', 'යු', 'බෝ', 'ව', 'න්']
 
-# Encode text into tokens
-encoding = tokenizer("මේ අතර, පෙබරවාරි මාසයේ පළමු")
+# Encode to integer IDs
+encoding = tokenizer("ආයුබෝවන්")
+encoding.input_ids       # [4, 23, 18, 7, 12]
+encoding.attention_mask  # [1, 1, 1, 1, 1]
 
-# List tokens
-tokens = [tokenizer.token_id_to_token_map[id] for id in encoding]
-print(tokens)
-# Output: ['මේ', ' ', 'අ', 'ත', 'ර', ',', ' ', 'පෙ', 'බ', 'ර', 'වා', 'රි', ' ', 'මා', 'ස', 'යේ', ' ', 'ප', 'ළ', 'මු']
+# Batch encode with padding
+batch = tokenizer(["ආයුබෝවන්", "සිංහල"], padding=True)
+batch.input_ids  # [[4, 23, 18, 7, 12], [9, 31, 6, 0, 0]]
 ```
 
-### Preprocessor
-
-Analyze Sinhala character ratio in text:
+### Spell Checking
 
 ```python
-from sinlib.preprocessing import get_sinhala_character_ratio
+from sinlib import TypoDetector
 
-# Sample sentences with varying Sinhala content
-sentences = [
-    'මෙය සිංහල වාක්‍යක්',                                  # Full Sinhala
-    'මෙය සිංහල වාක්‍යක් සමග english character කීපයක්',     # Mixed Sinhala and English
-    'This is a complete English sentence'                   # Full English
-]
+detector = TypoDetector.from_pretrained("Ransaka/sinlib")
 
-# Calculate Sinhala character ratio for each sentence
-ratios = get_sinhala_character_ratio(sentences)
-print(ratios)
-# Output: [0.9, 0.46875, 0.0]
+# Auto-correct a sentence
+detector("අපකරියට ගිය")
+# 'අපකීර්තියට ගිය'
+
+# Get correction suggestions
+detector.suggest_correction("අඩිරාජ")
+# ['අධිරාජ']
 ```
 
-### Spell Checker (beta)
-
-Detect typos and get spelling suggestions for Sinhala words using n gram models:
-```python 
-from sinlib.spellcheck import TypoDetector
-
-# Initialize the typo detector
-typo_detector = TypoDetector()
-
-# Check spelling of a word
-result = typo_detector("අඩිරාජයාගේ")
-print(result) # ['අධිරාජයාගේ', 'අධිරාජ්\u200dයයාගේ', 'අධිරාජයා']
-# Output: Either the word itself if correct, or a list of suggestions if it's a potential typo
-```
-
-### Romanizer
-
-Convert Sinhala text to Roman characters:
+### Preprocessing
 
 ```python
-from sinlib import Romanizer
+from sinlib import preprocessing
 
-# Sample texts with Sinhala content
-texts = [
-    "hello, මේ මාසයේ ගත වූ දින 15ක කාලය තුළ කොළඹ නගරය ආශ්‍රිත ව",
-    "මෑතකාලීන ව රට මුහුණ දුන් අභියෝගාත්මකම ආර්ථික කාරණාව ණය ප්‍රතිව්‍යුගතකරණය බව"
-]
+# Remove noise and normalise text
+clean = preprocessing.process_text("Hello, මේ සිංහල වාක්‍යකි.")
 
-# Initialize the romanizer
-romanizer = Romanizer(char_mapper_fp=None, tokenizer_vocab_path=None)
-
-# Romanize the texts
-romanized_texts = romanizer(texts)
-print(romanized_texts)
-# Output:
-# ['hello, me masaye gatha wu dina 15ka kalaya thula kolaba nagaraya ashritha wa',
-#  'methakaleena wa rata muhuna dun abhiyogathmakama arthika karanawa naya prathiwyugathakaranaya bawa']
+# Compute Sinhala character ratio
+ratio = preprocessing.get_sinhala_character_ratio(["මෙය සිංහල වාක්‍යක්"])
+# [0.9]
 ```
+
+## Why phonological tokenization?
+
+Sinhala script combines a base consonant with one or more vowel diacritics into a single phonetic unit. Standard Unicode tokenization breaks these apart, producing incorrect representations for downstream tasks like ASR and TTS.
+
+```
+"ආයුබෝවන්"
+
+Sinlib  →  ['ආ', 'යු', 'බෝ', 'ව', 'න්']   ✓ phonological units
+Unicode →  ['ආ', 'ය', 'ු', 'බ', 'ෝ', 'ව', 'න', '්']   ✗ raw code points
+```
+
+Vocab and model weights are fetched automatically from [`Ransaka/sinlib`](https://huggingface.co/Ransaka/sinlib) on HuggingFace Hub at first use — no manual setup required.
+
+## Documentation
+
+Full documentation is available at **[sinlib.readthedocs.io](https://sinlib.readthedocs.io)**, including:
+
+- [API Reference — Tokenizer](https://sinlib.readthedocs.io/en/latest/api/tokenizer/)
+- [API Reference — TypoDetector](https://sinlib.readthedocs.io/en/latest/api/spellcheck/)
+- [Guide: Tokenization](https://sinlib.readthedocs.io/en/latest/guides/tokenization/)
+- [Guide: Spell Checking](https://sinlib.readthedocs.io/en/latest/guides/spellcheck/)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Please open an issue or submit a pull request on [GitHub](https://github.com/Ransaka/sinlib).
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
 5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
-
-- Thanks to all contributors who have helped with the development of Sinlib
-- Special thanks to the Sinhala NLP community for their support and feedback
+MIT License — see the [LICENSE](LICENSE) file for details.

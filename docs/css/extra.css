@@ -1,57 +1,280 @@
-/* Google Fonts integration */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Noto+Sans+Sinhala:wght@400;500;600;700&display=swap');
+/* ── Fonts ────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Sinhala:wght@400;500;600&display=swap');
 
-/* Additional styling for Sinhala examples */
+/* ── Hero section ─────────────────────────────────────────── */
+.sinlib-hero {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  margin: -1.5rem -1.5rem 3rem;
+  background: var(--sinlib-grad-surface);
+  border-bottom: 1px solid var(--sinlib-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.sinlib-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 60%, rgba(139,92,246,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 75% 40%, rgba(34,211,238,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sinlib-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--sinlib-surface-2);
+  border: 1px solid var(--sinlib-border-strong);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sinlib-primary);
+  margin-bottom: 1.5rem;
+}
+
+.sinlib-hero__title {
+  font-size: clamp(2.5rem, 6vw, 4rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.05em !important;
+  line-height: 1.05 !important;
+  background: var(--sinlib-grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 1rem !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.sinlib-hero__subtitle {
+  font-size: 1.1rem;
+  color: var(--sinlib-text-muted);
+  max-width: 520px;
+  margin: 0 auto 2rem;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.sinlib-hero__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.sinlib-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: var(--sinlib-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sinlib-btn--primary {
+  background: var(--sinlib-grad-primary);
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(139,92,246,0.35);
+  -webkit-text-fill-color: #ffffff;
+}
+
+.sinlib-btn--primary:hover {
+  box-shadow: 0 6px 24px rgba(139,92,246,0.5);
+  transform: translateY(-1px);
+}
+
+.sinlib-btn--ghost {
+  background: var(--sinlib-surface-2);
+  color: var(--sinlib-text) !important;
+  border: 1px solid var(--sinlib-border-strong);
+  -webkit-text-fill-color: initial;
+}
+
+.sinlib-btn--ghost:hover {
+  background: var(--sinlib-surface-3);
+  border-color: var(--sinlib-primary);
+  color: var(--sinlib-primary) !important;
+}
+
+.sinlib-hero__install {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--sinlib-code-bg);
+  border: 1px solid var(--sinlib-border-strong);
+  border-radius: var(--sinlib-radius);
+  padding: 0.65rem 1.2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--sinlib-primary);
+  position: relative;
+}
+
+.sinlib-hero__install span.prompt {
+  color: var(--sinlib-text-faint);
+  user-select: none;
+}
+
+/* ── Feature cards ────────────────────────────────────────── */
+.sinlib-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.sinlib-card {
+  background: var(--sinlib-surface);
+  border: 1px solid var(--sinlib-border);
+  border-radius: var(--sinlib-radius-lg);
+  padding: 1.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  text-decoration: none !important;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.sinlib-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--sinlib-grad-surface);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sinlib-card:hover {
+  border-color: var(--sinlib-primary);
+  box-shadow: var(--sinlib-glow);
+  transform: translateY(-2px);
+}
+
+.sinlib-card:hover::before {
+  opacity: 1;
+}
+
+.sinlib-card__icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.sinlib-card__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--sinlib-text) !important;
+  margin: 0 0 0.4rem;
+  -webkit-text-fill-color: initial;
+  position: relative;
+  z-index: 1;
+}
+
+.sinlib-card__desc {
+  font-size: 0.82rem;
+  color: var(--sinlib-text-muted);
+  margin: 0;
+  line-height: 1.55;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Sinhala example blocks ───────────────────────────────── */
 .sinhala-example {
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  padding: 1em;
-  margin: 1em 0;
-  border-left: 4px solid #3f51b5;
+  background: var(--sinlib-surface-2);
+  border-radius: var(--sinlib-radius);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-left: 3px solid var(--sinlib-primary);
   font-family: 'Noto Sans Sinhala', sans-serif;
+  font-size: 1.05rem;
+  line-height: 2.0;
+  color: var(--sinlib-text);
 }
 
-/* Styling for code output */
+/* ── Code output blocks ───────────────────────────────────── */
 .code-output {
-  background-color: #f5f5f5;
-  border-left: 4px solid #4caf50;
-  padding: 0.5em 1em;
-  margin-top: -1em;
-  margin-bottom: 1em;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9em;
-  color: #212121;
+  background: var(--sinlib-surface-2);
+  border-left: 3px solid hsl(145, 65%, 48%);
+  padding: 0.65rem 1rem;
+  margin-top: -0.9rem;
+  margin-bottom: 1rem;
+  border-radius: 0 0 var(--sinlib-radius) var(--sinlib-radius);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--sinlib-text-muted);
 }
 
-/* Styling for API documentation */
+/* ── API section cards ────────────────────────────────────── */
 .api-section {
-  margin: 2em 0;
-  padding: 1em;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background-color: #fafafa;
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--sinlib-border);
+  border-radius: var(--sinlib-radius);
+  background: var(--sinlib-surface);
 }
 
 .api-section h3 {
   margin-top: 0;
-  color: #3f51b5;
+  color: var(--sinlib-primary);
 }
 
-/* Improve navigation */
+/* ── Stat bar (hero stats) ────────────────────────────────── */
+.sinlib-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.sinlib-stat {
+  text-align: center;
+}
+
+.sinlib-stat__value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--sinlib-text);
+  letter-spacing: -0.03em;
+}
+
+.sinlib-stat__label {
+  font-size: 0.72rem;
+  color: var(--sinlib-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Navigation enhancements ──────────────────────────────── */
 .md-nav__link:hover {
-  color: #3f51b5;
+  color: var(--sinlib-primary);
 }
 
 .md-nav__link--active {
-  color: #3f51b5;
-  font-weight: 500;
+  color: var(--sinlib-primary) !important;
 }
 
-/* Footer styling */
-.md-footer {
-  background-color: #3f51b5;
+/* ── Search ───────────────────────────────────────────────── */
+.md-search__input {
+  border-radius: var(--sinlib-radius);
 }
 
-.md-footer-meta {
-  background-color: #303f9f;
+/* ── Version badge in header ──────────────────────────────── */
+.md-header__topic:first-child {
+  font-weight: 600;
 }
