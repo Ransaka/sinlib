@@ -1,6 +1,6 @@
 [project]
 name = "sinlib"
-version = "0.1.11"
+version = "0.1.12"
 description = "Sinhala NLP Toolkit"
 authors = [
     { name = "Ransaka", email = "ransaka.ravihara@gmail.com" }
@@ -10,11 +10,6 @@ dependencies = [
     "transformers >= 4.31.0",
     "tqdm >= 4.64.1",
     "huggingface_hub"
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -26,6 +21,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
 ]
 
 [project.urls]
