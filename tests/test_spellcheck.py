@@ -89,8 +89,10 @@ def test_get_ngram_probs(mock_typo_detector, mock_ngram_probs):
 
 def test_word_ngram_probability(mock_typo_detector):
     """Test word_ngram_probability calculates probabilities correctly."""
-    # Configure the mock tokenizer to return specific values
-    mock_typo_detector._tokenizer = lambda word, truncate_and_pad: [1, 2, 3, 4]
+    # Configure the mock tokenizer to return specific values via .encode()
+    mock_tokenizer = MagicMock()
+    mock_tokenizer.encode.return_value = [1, 2, 3, 4]
+    mock_typo_detector._tokenizer = mock_tokenizer
     
     # Mock the n-gram probabilities
     mock_typo_detector._ngram_probs = {12: 0.5, 23: 0.4, 34: 0.3}

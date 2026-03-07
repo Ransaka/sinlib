@@ -7,14 +7,53 @@ from pathlib import Path
 from enum import Enum
 
 class Filenames(Enum):
-    """Enumeration for consistent filename references."""
+    """
+    Enumeration of canonical filenames for model artefacts stored on HuggingFace Hub.
+
+    Attributes
+    ----------
+    VOCAB : str
+        Tokenizer vocabulary file (``"vocab.json"``).
+    CONFIG : str
+        Tokenizer configuration file (``"config.json"``).
+    CHAR_MAPPER : str
+        Character mapping file (``"char_map.json"``).
+    NGRAM_PROBS : str
+        Serialised n-gram probability array (``"ngram_probs.npy"``).
+    DICTIONARY : str
+        Serialised Sinhala word dictionary (``"dictionary.npy"``).
+    """
     VOCAB = "vocab.json"
     CONFIG = "config.json"
     CHAR_MAPPER = "char_map.json"
     NGRAM_PROBS = "ngram_probs.npy"
     DICTIONARY = "dictionary.npy"
 
-def download_hub_file(file_name:str):
+def download_hub_file(file_name: str) -> str:
+    """
+    Download a file from the ``Ransaka/sinlib`` HuggingFace Hub repository.
+
+    The file is cached locally by the ``huggingface_hub`` library; subsequent
+    calls with the same ``file_name`` return the cached path without a network
+    request.
+
+    Parameters
+    ----------
+    file_name : str
+        Filename to download, e.g. ``Filenames.VOCAB.value``.
+
+    Returns
+    -------
+    str
+        Absolute path to the locally cached file.
+
+    Examples
+    --------
+    >>> from sinlib.utils.preprocessing import download_hub_file, Filenames
+    >>> path = download_hub_file(Filenames.VOCAB.value)
+    >>> path.endswith("vocab.json")
+    True
+    """
     from huggingface_hub.file_download import hf_hub_download
     return hf_hub_download(
         repo_id="Ransaka/sinlib",
@@ -22,7 +61,20 @@ def download_hub_file(file_name:str):
         repo_type="model",
     )
 
-def load_char_mapper():
+def load_char_mapper() -> dict:
+    """
+    Load the character-to-index mapping from HuggingFace Hub.
+
+    Returns
+    -------
+    dict
+        Mapping from Sinhala characters to integer indices.
+
+    Raises
+    ------
+    ValueError
+        If the downloaded file does not exist at the expected path.
+    """
     char_mapper_fp = download_hub_file(Filenames.CHAR_MAPPER.value)
     if Path(char_mapper_fp).is_file():
         with open(char_mapper_fp, "r") as f:
@@ -35,33 +87,73 @@ def load_char_mapper():
     return char_mapper
 
 
-def load_default_vocab_map():
+def load_default_vocab_map() -> dict:
+    """
+    Load the default tokenizer vocabulary from HuggingFace Hub.
+
+    Returns
+    -------
+    dict
+        Mapping from token strings to integer IDs.
+    """
     file_path = download_hub_file(Filenames.VOCAB.value)
     with open(file_path, "r") as f:
         vocab_map = json.load(f)
     return vocab_map
 
-def load_default_config():
+def load_default_config() -> dict:
+    """
+    Load the default tokenizer configuration from HuggingFace Hub.
+
+    Returns
+    -------
+    dict
+        Configuration dictionary (e.g. ``model_max_length``).
+    """
     file_path = download_hub_file(Filenames.CONFIG.value)
     with open(file_path, "r") as f:
         config = json.load(f)
     return config
 
 
-def remove_non_printable(input_string):
+def remove_non_printable(input_string: str) -> str:
+    """
+    Remove non-printable characters from a string, keeping ASCII printable
+    characters (U+0020–U+007E) and the Sinhala Unicode block (U+0D80–U+0DFF).
+
+    Parameters
+    ----------
+    input_string : str
+        Input string potentially containing non-printable characters.
+
+    Returns
+    -------
+    str
+        Cleaned string with non-printable characters removed.
+    """
     printable_pattern = re.compile(r"[^\u0020-\u007E\u0D80-\u0DFF]+", flags=re.UNICODE)
     return printable_pattern.sub("", input_string)
 
 
-def remove_english_characters(text):
+def remove_english_characters(text: str) -> str:
     """
-    Remove English characters from the given text using a regular expression.
+    Remove ASCII Latin characters from a string.
 
-    Parameters:
-    - text (str): The input text containing English and Sinhala characters.
+    Parameters
+    ----------
+    text : str
+        Input text containing English and/or Sinhala characters.
 
-    Returns:
-    - str: Text with English characters removed.
+    Returns
+    -------
+    str
+        Text with all ASCII a–z / A–Z characters removed and consecutive
+        whitespace collapsed to a single space.
+
+    Examples
+    --------
+    >>> remove_english_characters("Hello සිංහල World")
+    'සිංහල'
     """
     english_pattern = re.compile("[a-zA-Z]")
     text = english_pattern.sub(r"", text)
@@ -110,15 +202,39 @@ def remove_english_characters(text):
 
 def process_text(text: str) -> list[str]:
     """
-    Tokenizes text by combining consonants with diacritics and joining a 
-    space to the preceding token if it's followed by a letter.
+    Split a Sinhala string into phonological units.
 
-    Args:
-        text: The input string to tokenize.
+    Each unit is either:
 
-    Returns:
-        A list of string tokens. Each token is either a single character,
-        a combination of a letter and a diacritic, or a space.
+    - a Sinhala consonant optionally followed by one vowel diacritic,
+    - a standalone Sinhala vowel letter,
+    - a number or punctuation character, or
+    - a space character (appended to the preceding token when the next
+      character is a letter or diacritic, so that word-boundary information
+      is preserved).
+
+    Parameters
+    ----------
+    text : str
+        Input Sinhala text to tokenize.
+
+    Returns
+    -------
+    list of str
+        Ordered list of phonological unit strings.
+
+    Raises
+    ------
+    TypeError
+        If ``text`` is not a ``str``.
+
+    Examples
+    --------
+    >>> process_text("ආයුබෝවන්")
+    ['ආ', 'යු', 'බෝ', 'ව', 'න්']
+
+    >>> process_text("සිංහල")
+    ['සි', 'ං', 'හ', 'ල']
     """
     if not isinstance(text, str):
         raise TypeError("Input must be a string.")

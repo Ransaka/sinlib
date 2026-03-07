@@ -1,0 +1,131 @@
+# Spell Checking Guide
+
+This guide covers sinlib's `TypoDetector` — how it works, how to use it, and how to tune it.
+
+## How it works
+
+`TypoDetector` uses a two-step approach:
+
+1. **Dictionary lookup** — if the word is in the known Sinhala dictionary (≈ 45 000 words), it is immediately accepted.
+2. **N-gram scoring** — if the word is *not* in the dictionary, its character-level bigram probability is estimated. Words below the `threshold` probability are replaced by the closest dictionary match.
+
+The n-gram model is trained on Sinhala text and scores sequences of tokenizer output IDs. A very low score indicates an implausible character sequence — likely a typo.
+
+## Loading the detector
+
+```python
+from sinlib import TypoDetector
+
+# Recommended: HF-style constructor (downloads artefacts on first use)
+detector = TypoDetector.from_pretrained("Ransaka/sinlib")
+
+# Direct construction (equivalent, downloads on __init__)
+detector = TypoDetector()
+```
+
+Artefacts are cached locally after the first download.
+
+## Correcting text
+
+```python
+detector("අපකරියට ගිය")
+# 'අපකීර්තියට ගිය'
+
+detector("මගේ ගෙදර ලස්සනයි")
+# 'මගේ ගෙදර ලස්සනයි'  ← all words valid, unchanged
+```
+
+`__call__` processes each whitespace-separated word independently and joins the results.
+
+## Getting suggestions
+
+```python
+detector.suggest_correction("අඩිරාජ")
+# ['අධිරාජ']
+
+detector.suggest_correction("ගෙදර")
+# ['ගෙදර']  ← already in dictionary, but suggest_correction still works
+
+detector.suggest_correction("xyzxyz")
+# ['No suggestion']
+```
+
+The method uses `difflib.get_close_matches` with a similarity cutoff of `0.7`. The `n` parameter controls the maximum number of suggestions:
+
+```python
+detector.suggest_correction("අඩිරාජ", n=5)
+```
+
+## Scoring words
+
+```python
+prob = detector.word_ngram_probability("සිංහල")
+# e.g. 3.2e-05  — higher means more likely to be a real word
+
+prob = detector.word_ngram_probability("xzq")
+# e.g. 1e-27  — very low; would trigger correction
+```
+
+Results are LRU-cached, so repeated calls to the same word are free.
+
+## Tuning the threshold
+
+The default threshold `1e-8` works well for general Sinhala text. Adjust it if you want stricter or more lenient behaviour:
+
+```python
+# Stricter — flag more words as typos
+detector = TypoDetector(threshold=1e-6)
+
+# More lenient — only flag very obvious typos
+detector = TypoDetector(threshold=1e-12)
+```
+
+### UserWarning for borderline words
+
+Words that are *not* in the dictionary but score *above* the threshold produce a `UserWarning`:
+
+```python
+import warnings
+
+with warnings.catch_warnings(record=True) as w:
+    result = detector("uncommon_word")
+    if w:
+        print(w[0].message)
+        # UserWarning: 'uncommon_word' is unusual but may not be a typo.
+```
+
+You can silence these with `warnings.filterwarnings("ignore")` if needed.
+
+## Inspecting the vocabulary
+
+```python
+# Human-readable summaries
+print(detector.dictionary)
+# Dictionary containing 45231 words. Use .get_dictionary() to access the full list.
+
+print(detector.ngram_probs)
+# N-gram probability dictionary with 12453 entries. ...
+
+# Full access
+words = detector.get_dictionary()   # set[str]
+probs = detector.get_ngram_probs()  # dict
+```
+
+## Lazy loading
+
+If you want to defer the network download until first use:
+
+```python
+detector = TypoDetector(lazy_loading=True)
+# Nothing downloaded yet
+
+result = detector("සිංහල")
+# Downloads artefacts now, then processes
+```
+
+## Limitations
+
+- Corrections are made word-by-word; the model has no sentence context.
+- Only the *top* suggestion replaces a typo — alternatives are available via `suggest_correction()`.
+- The dictionary covers general Sinhala vocabulary; domain-specific or neologistic words may be flagged.
+- Romanised Sinhala (Singlish) is not supported.

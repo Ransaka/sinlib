@@ -1,89 +1,76 @@
-# Sinlib Documentation
+# Sinlib
+
 ![Sinlib Logo](https://raw.githubusercontent.com/Ransaka/sinlib/refs/heads/main/welcome.png)
 
+A Python toolkit for Sinhala natural language processing. Sinlib provides character-level tokenization tailored to Sinhala's phonological structure, plus spell-checking via an n-gram language model.
 
-Welcome to the Sinlib documentation. This library provides a toolkit for working with Sinhala text data, including advanced character-level tokenization for the Sinhala language. Additionally, you can find other utilities such as transliteration, romanization, ASR, typo correction, and more.
-## Table of Contents
-- [Installation](#installation)
-- [Advanced Character Level Tokenization](#advanced-character-level-tokenization)
-- [Transliteration](#transliteration)
-- [Romanization](#romanization)
-- [ASR](#asr)
-- [Typo Correction](#typo-correction)
-- [Utilities](#utilities)
-- [Contributing](#contributing)
-- [License](#license)
 ## Installation
-You can install Sinlib using pip:
 
 ```bash
 pip install sinlib
 ```
 
-## Advanced Character Level Tokenization
-Sinlib provides advanced character-level tokenization for the Sinhala language. Instead of using traditional character-level tokenization, this library employs a more advanced tokenization algorithm. The core idea of this algorithm is to split a given text into meaningful character units.
+## Quick Start
 
-Sinhala has a rich character set. For example, the word "ආයුබෝවන්" is more meaningful when split into [ආ, යු, බෝ, ව, න්] rather than ['ආ', 'ය', 'ු', 'බ', 'ෝ', 'ව', 'න', '්']. This approach is particularly helpful when working on ASR (Automatic Speech Recognition) or TTS (Text-to-Speech) tasks.
-```python
-from sinlib import Toenizer
-tokenizer = Tokenizer(max_len=16)
-```
-Once you have initialized the tokenizer you can train it on your data or use the default tokenizer.
- 
-To use the default tokenizer you can use the following code:
-```python
-tokenizer = Tokenizer(max_len=16)
-tokenizer.load_from_pretrained(load_default_tokenizer=True)
-```
-This will load the default tokenizer, which can handle most of the Sinhala corpus you will encounter. In addition to Sinhala characters, the default tokenizer also includes punctuation marks and numbers. However, if you need more control over tokenization, you can train your own tokenizer using the following code:
+### Tokenization
 
 ```python
-tokenizer = Tokenizer(max_len=16)
-tokenizer.train(corpus_list)
-```
-Once you have trained your own tokenizer you can use it to tokenize your data. To tokenize your data you can use the following code:
-```python
-tokenizer("ආයුබෝවන්")
+from sinlib import Tokenizer
+
+tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
+
+# Tokenize a word — returns phonological units, not raw characters
+tokens = tokenizer.tokenize("ආයුබෝවන්")
 # ['ආ', 'යු', 'බෝ', 'ව', 'න්']
+
+# Encode to IDs (returns a BatchEncoding)
+encoding = tokenizer("ආයුබෝවන්")
+encoding.input_ids       # [4, 23, 18, 7, 12]
+encoding.attention_mask  # [1, 1, 1, 1, 1]
+
+# Batch encode
+batch = tokenizer(["ආයුබෝවන්", "සිංහල"], padding=True)
+batch.input_ids          # [[4, 23, 18, 7, 12], [9, 31, 6, 0, 0]]
 ```
-If you need to save the tokenizer you can use below code to preserve learned vocabulary.
+
+### Spell Checking
 
 ```python
-tokenizer.save_pretrained("path/to/save/tokenizer")
-```
+from sinlib import TypoDetector
 
-## Transliteration
+detector = TypoDetector.from_pretrained("Ransaka/sinlib")
 
-*Coming soon*
-
-## Romanization
-
-*Coming soon*
-
-## ASR
-
-*Coming soon*
-
-## Typo Correction
-
-We offer basic typo correction functionality. For simplicity, we currently use an n-gram language model. To use the typo correction functionality, you can use the following code:
-
-```python
-from sinlib.spellcheck import TypoDetector
-typo_corrector = TypoDetector()
-typo_corrector("අපකරියට ගිය")
+detector("අපකරියට ගිය")
 # 'අපකීර්තියට ගිය'
+
+detector.suggest_correction("අඩිරාජ")
+# ['අධිරාජ']
 ```
-We are working on adding more advanced typo correction functionality in the future.
 
-## Utilities
+## Core Concepts
 
-*Coming soon*
+Sinhala combines a base consonant with one or more vowel diacritics into a single phonetic unit. For example,
+<span class="sinhala-text" lang="si">ආයුබෝවන්</span> is meaningfully split as
+<span class="sinhala-text" lang="si">[ආ, යු, බෝ, ව, න්]</span>
+rather than individual Unicode code points. This representation is especially useful for ASR and TTS tasks.
+
+Sinlib's tokenizer implements this splitting natively. All vocabulary and model weights are fetched automatically from [`Ransaka/sinlib`](https://huggingface.co/Ransaka/sinlib) on HuggingFace Hub at first use.
+
+## Navigation
+
+| Section | Description |
+|---|---|
+| [API Reference → Tokenizer](api/tokenizer.md) | Full `Tokenizer` method reference |
+| [API Reference → BatchEncoding](api/encoding.md) | `BatchEncoding` return type |
+| [API Reference → TypoDetector](api/spellcheck.md) | Spell-checker reference |
+| [API Reference → Preprocessing](api/preprocessing.md) | Low-level text utilities |
+| [Guide: Tokenization](guides/tokenization.md) | In-depth tokenization walkthrough |
+| [Guide: Spell Checking](guides/spellcheck.md) | Spell checking walkthrough |
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Please open an issue or submit a pull request on [GitHub](https://github.com/Ransaka/sinlib).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License. See the `LICENSE` file for details.

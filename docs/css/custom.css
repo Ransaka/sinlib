@@ -77,7 +77,12 @@ pre code {
 /* Sinhala text styling */
 .sinhala-text {
   font-family: 'Noto Sans Sinhala', sans-serif;
-  line-height: 1.8;
+  line-height: 2.0;
+}
+
+:lang(si) {
+  font-family: 'Noto Sans Sinhala', sans-serif;
+  line-height: 2.0;
 }
 
 /* Tables */

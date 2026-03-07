@@ -75,6 +75,14 @@ extra_css:
 
 nav:
   - Home: index.md
+  - API Reference:
+    - BatchEncoding: api/encoding.md
+    - Tokenizer: api/tokenizer.md
+    - TypoDetector: api/spellcheck.md
+    - Preprocessing: api/preprocessing.md
+  - Guides:
+    - Tokenization: guides/tokenization.md
+    - Spell Checking: guides/spellcheck.md
   - Examples:
     - Tokenization Example: examples/Tokenization Example.md
     - Typo Correction: examples/Typo Correction.md
