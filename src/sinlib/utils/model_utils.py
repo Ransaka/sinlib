@@ -1,7 +1,5 @@
-import torch
 from pathlib import Path
 from os import path
-from sinlib.utils.models.transliterator_model import BiLSTMTranslator
 from sinlib.utils.dataset_utils import load_tokenizer
 
 CURRENT_PATH = path.dirname(path.abspath(__file__))
@@ -11,6 +9,7 @@ HIDDEN_SIZE = 128
 
 
 def detect_device(force_cpu=False):
+    import torch
     if force_cpu:
         return torch.device("cpu")
     elif torch.backends.mps.is_available():
@@ -20,6 +19,8 @@ def detect_device(force_cpu=False):
 
 
 def load_transliterator_model():
+    import torch
+    from sinlib.utils.models.transliterator_model import BiLSTMTranslator
     tokenizer = load_tokenizer()
     input_size = len(tokenizer)
     output_size = len(tokenizer)
@@ -34,6 +35,7 @@ def load_transliterator_model():
 
 
 def inference(model, tokenizer, input_text):
+    import torch
     model.eval()
     device = detect_device()
     tokens_to_ignore = [tokenizer.vocab_map[tok] for tok in tokenizer.special_tokens]
