@@ -1,4 +1,7 @@
-# BatchEncoding
+---
+title: BatchEncoding
+description: API reference for the BatchEncoding return type.
+---
 
 `BatchEncoding` is the return type of `Tokenizer.__call__`, `Tokenizer.encode_plus()`, and `Tokenizer.batch_encode()`. It provides both attribute-style and dict-style access to tokenizer output.
 
@@ -38,16 +41,18 @@ batch = tokenizer(["ආයුබෝවන්", "සිංහල"], padding=True)
 batch.input_ids   # [[4, 23, 18, 7, 12], [9, 31, 6, 0, 0]]
 ```
 
-## API Reference
+## Fields
 
-::: sinlib.encoding.BatchEncoding
-    options:
-      show_source: true
-      members:
-        - __init__
-        - input_ids
-        - attention_mask
-        - to_dict
-        - __getitem__
-        - __repr__
-        - __eq__
+| Field | Type | Description |
+|---|---|---|
+| `input_ids` | `list[int]` or `list[list[int]]` | Token IDs |
+| `attention_mask` | `list[int]` or `list[list[int]]` | `1` for real tokens, `0` for padding |
+
+## Methods
+
+| Method | Description |
+|---|---|
+| `to_dict()` | Returns a plain `dict` with all fields |
+| `__getitem__(key)` | Dict-style access |
+| `__repr__()` | Human-readable representation |
+| `__eq__(other)` | Equality comparison |

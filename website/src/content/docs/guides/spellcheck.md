@@ -1,4 +1,7 @@
-# Spell Checking Guide
+---
+title: Spell Checking Guide
+description: How to use sinlib's TypoDetector to detect and correct Sinhala typos.
+---
 
 This guide covers sinlib's `TypoDetector` — how it works, how to use it, and how to tune it.
 
@@ -9,17 +12,15 @@ This guide covers sinlib's `TypoDetector` — how it works, how to use it, and h
 1. **Dictionary lookup** — if the word is in the known Sinhala dictionary (≈ 45 000 words), it is immediately accepted.
 2. **N-gram scoring** — if the word is *not* in the dictionary, its character-level bigram probability is estimated. Words below the `threshold` probability are replaced by the closest dictionary match.
 
-The n-gram model is trained on Sinhala text and scores sequences of tokenizer output IDs. A very low score indicates an implausible character sequence — likely a typo.
-
 ## Loading the detector
 
 ```python
 from sinlib import TypoDetector
 
-# Recommended: HF-style constructor (downloads artefacts on first use)
+# Recommended: downloads artefacts on first use
 detector = TypoDetector.from_pretrained("Ransaka/sinlib")
 
-# Direct construction (equivalent, downloads on __init__)
+# Direct construction (equivalent)
 detector = TypoDetector()
 ```
 
@@ -44,7 +45,7 @@ detector.suggest_correction("අඩිරාජ")
 # ['අධිරාජ']
 
 detector.suggest_correction("ගෙදර")
-# ['ගෙදර']  ← already in dictionary, but suggest_correction still works
+# ['ගෙදර']  ← already in dictionary
 
 detector.suggest_correction("xyzxyz")
 # ['No suggestion']
@@ -80,40 +81,7 @@ detector = TypoDetector(threshold=1e-6)
 detector = TypoDetector(threshold=1e-12)
 ```
 
-### UserWarning for borderline words
-
-Words that are *not* in the dictionary but score *above* the threshold produce a `UserWarning`:
-
-```python
-import warnings
-
-with warnings.catch_warnings(record=True) as w:
-    result = detector("uncommon_word")
-    if w:
-        print(w[0].message)
-        # UserWarning: 'uncommon_word' is unusual but may not be a typo.
-```
-
-You can silence these with `warnings.filterwarnings("ignore")` if needed.
-
-## Inspecting the vocabulary
-
-```python
-# Human-readable summaries
-print(detector.dictionary)
-# Dictionary containing 45231 words. Use .get_dictionary() to access the full list.
-
-print(detector.ngram_probs)
-# N-gram probability dictionary with 12453 entries. ...
-
-# Full access
-words = detector.get_dictionary()   # set[str]
-probs = detector.get_ngram_probs()  # dict
-```
-
 ## Lazy loading
-
-If you want to defer the network download until first use:
 
 ```python
 detector = TypoDetector(lazy_loading=True)
@@ -123,9 +91,19 @@ result = detector("සිංහල")
 # Downloads artefacts now, then processes
 ```
 
+## Inspecting the vocabulary
+
+```python
+print(detector.dictionary)
+# Dictionary containing 45231 words. Use .get_dictionary() to access the full list.
+
+words = detector.get_dictionary()   # set[str]
+probs = detector.get_ngram_probs()  # dict
+```
+
 ## Limitations
 
 - Corrections are made word-by-word; the model has no sentence context.
-- Only the *top* suggestion replaces a typo — alternatives are available via `suggest_correction()`.
+- Only the top suggestion replaces a typo — alternatives available via `suggest_correction()`.
 - The dictionary covers general Sinhala vocabulary; domain-specific or neologistic words may be flagged.
 - Romanised Sinhala (Singlish) is not supported.

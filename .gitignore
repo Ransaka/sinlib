@@ -11,3 +11,9 @@ experiments/*
 *.ipynb
 .qodo
 examples/examples.ipynb
+
+# Astro / Starlight
+website/dist/
+website/node_modules/
+website/.astro/
+

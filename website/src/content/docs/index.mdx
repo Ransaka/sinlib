@@ -1,0 +1,117 @@
+---
+title: Sinlib
+description: A Python toolkit for Sinhala NLP — phonological tokenization, spell checking, and text preprocessing.
+template: splash
+hero:
+  tagline: Sinhala NLP toolkit for Python. Phonological tokenization, n-gram spell checking, and text preprocessing — all in one package.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /guides/tokenization/
+      icon: right-arrow
+    - text: API Reference
+      link: /api/tokenizer/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+
+<div class="hero-badge">v0.1.13 · MIT License</div>
+
+## Install
+
+```sh
+pip install sinlib
+```
+
+## What's inside
+
+<div class="feature-grid">
+  <div class="feature-card">
+    <span class="icon">🔤</span>
+    <strong>Phonological Tokenizer</strong>
+    <p>Splits Sinhala text into base consonant + diacritic units. HuggingFace-compatible API.</p>
+  </div>
+  <div class="feature-card">
+    <span class="icon">✅</span>
+    <strong>Spell Checker</strong>
+    <p>N-gram model backed by a ~45 000-word dictionary. Auto-corrects typos and suggests alternatives.</p>
+  </div>
+  <div class="feature-card">
+    <span class="icon">⚙️</span>
+    <strong>Preprocessing</strong>
+    <p>Remove noise, compute Sinhala character ratios, and batch-process text.</p>
+  </div>
+  <div class="feature-card">
+    <span class="icon">☁️</span>
+    <strong>HuggingFace Hub</strong>
+    <p>Vocab and weights are fetched automatically from <code>Ransaka/sinlib</code> on first use.</p>
+  </div>
+</div>
+
+## Quick start
+
+<Tabs>
+  <TabItem label="Tokenization">
+    ```python
+    from sinlib import Tokenizer
+
+    tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
+
+    # Split into phonological units
+    tokenizer.tokenize("ආයුබෝවන්")
+    # ['ආ', 'යු', 'බෝ', 'ව', 'න්']
+
+    # Encode to integer IDs
+    enc = tokenizer("ආයුබෝවන්")
+    enc.input_ids       # [4, 23, 18, 7, 12]
+    enc.attention_mask  # [1, 1, 1, 1, 1]
+    ```
+  </TabItem>
+  <TabItem label="Batch encoding">
+    ```python
+    from sinlib import Tokenizer
+
+    tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
+
+    batch = tokenizer(["ආයුබෝවන්", "සිංහල"], padding=True)
+    batch.input_ids
+    # [[4, 23, 18, 7, 12],
+    #  [9, 31,  6,  0,  0]]  ← padded
+    ```
+  </TabItem>
+  <TabItem label="Spell checking">
+    ```python
+    from sinlib import TypoDetector
+
+    detector = TypoDetector.from_pretrained("Ransaka/sinlib")
+
+    detector("අපකරියට ගිය")
+    # 'අපකීර්තියට ගිය'
+
+    detector.suggest_correction("අඩිරාජ")
+    # ['අධිරාජ']
+    ```
+  </TabItem>
+</Tabs>
+
+## Why phonological tokenization?
+
+Sinhala combines a base consonant with vowel diacritics into a single phonetic unit.
+Raw Unicode tokenization breaks these apart — producing incorrect representations for ASR and TTS.
+
+| Approach | Output for `ආයුබෝවන්` |
+|---|---|
+| **Sinlib** | `['ආ', 'යු', 'බෝ', 'ව', 'න්']` — 5 phonological units |
+| Raw Unicode | `['ආ', 'ය', 'ු', 'බ', 'ෝ', 'ව', 'න', '්']` — 8 code points |
+
+<CardGrid>
+  <Card title="Tokenization guide" icon="open-book">
+    Learn how the phonological splitter works and how to integrate it in your pipeline. [Read the guide →](/guides/tokenization/)
+  </Card>
+  <Card title="Spell checking guide" icon="approve-check-circle">
+    Detect and correct Sinhala typos using the n-gram language model. [Read the guide →](/guides/spellcheck/)
+  </Card>
+</CardGrid>
