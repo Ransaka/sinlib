@@ -2,7 +2,22 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+// When building on ReadTheDocs, READTHEDOCS_CANONICAL_URL is set to the full
+// versioned URL, e.g. https://sinlib.readthedocs.io/en/latest/
+// We derive the base path from it so Astro generates correct asset URLs.
+const canonicalUrl = process.env.READTHEDOCS_CANONICAL_URL;
+let site = 'https://sinlib.readthedocs.io';
+let base = undefined;
+if (canonicalUrl) {
+	const parsed = new URL(canonicalUrl);
+	site = parsed.origin;
+	// Strip trailing slash; Astro expects base like '/en/latest' not '/en/latest/'
+	base = parsed.pathname.replace(/\/$/, '') || undefined;
+}
+
 export default defineConfig({
+	site,
+	base,
 	integrations: [
 		starlight({
 			title: 'Sinlib',
