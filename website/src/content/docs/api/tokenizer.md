@@ -42,7 +42,7 @@ tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
 tokenizer = Tokenizer.from_pretrained("./my_tokenizer/")
 ```
 
-The directory must contain a `vocab.json` file. Use `save_pretrained()` to create one.
+The directory must contain `vocab.json` and `config.json` files. Use `save_pretrained()` to create them.
 
 ### Legacy (deprecated)
 
@@ -63,7 +63,7 @@ encoding = tokenizer("ආයුබෝවන්")
 ### With padding and truncation
 
 ```python
-encoding = tokenizer("ආයුබෝවන්", max_length=8, padding="max_length", truncation=True)
+encoding = tokenizer("ආයුබෝවන්", max_length=8, padding=True, truncation=True)
 ```
 
 ### Batch encoding
@@ -77,14 +77,14 @@ batch.input_ids   # [[4, 23, 18, 7, 12], [9, 31, 6, 0, 0]]
 
 | Attribute | Default | Description |
 |---|---|---|
-| `tokenizer.pad_token` | `"[PAD]"` | Padding token |
-| `tokenizer.unk_token` | `"[UNK]"` | Unknown token |
-| `tokenizer.bos_token` | `"[BOS]"` | Beginning of sequence |
-| `tokenizer.eos_token` | `"[EOS]"` | End of sequence |
+| `tokenizer.pad_token` | `"<|pad|>"` | Padding token |
+| `tokenizer.unk_token` | `"<|unk|>"` | Unknown token |
+| `tokenizer.bos_token` | `"<|bos|>"` | Beginning of sequence |
+| `tokenizer.eos_token` | `"<|end_of_text|>"` | End of sequence |
 
 ## Saving
 
 ```python
 tokenizer.save_pretrained("./my_tokenizer/")
-# Writes vocab.json to the directory
+# Writes vocab.json and config.json to the directory
 ```

@@ -8,7 +8,14 @@ Low-level Sinhala text processing functions used internally by `Tokenizer`. The 
 ## Import
 
 ```python
-from sinlib.utils.preprocessing import process_text, download_hub_file, Filenames
+from sinlib.utils.preprocessing import (
+    process_text,
+    download_hub_file,
+    Filenames,
+    remove_non_printable,
+    remove_english_characters,
+    get_sinhala_character_ratio,
+)
 ```
 
 ## `process_text`
@@ -44,6 +51,43 @@ vocab_path = download_hub_file(Filenames.VOCAB.value)
 | Member | Value | Description |
 |---|---|---|
 | `Filenames.VOCAB` | `"vocab.json"` | Token vocabulary |
-| `Filenames.CHAR_MAP` | `"char_map.json"` | Character mapping |
+| `Filenames.CONFIG` | `"config.json"` | Tokenizer configuration |
+| `Filenames.CHAR_MAPPER` | `"char_map.json"` | Character mapping |
 | `Filenames.NGRAM_PROBS` | `"ngram_probs.npy"` | Bigram probabilities |
 | `Filenames.DICTIONARY` | `"dictionary.npy"` | Word dictionary |
+
+## `remove_non_printable`
+
+Removes non-printable characters from a string, keeping ASCII printable characters (U+0020–U+007E) and the Sinhala Unicode block (U+0D80–U+0DFF).
+
+```python
+from sinlib.utils.preprocessing import remove_non_printable
+
+remove_non_printable("මම ගෙදර ගියා\x00")
+# 'මම ගෙදර ගියා'
+```
+
+## `remove_english_characters`
+
+Removes ASCII Latin characters (a–z / A–Z) from a text string.
+
+```python
+from sinlib.utils.preprocessing import remove_english_characters
+
+remove_english_characters("Hello සිංහල World")
+# 'සිංහල'
+```
+
+## `get_sinhala_character_ratio`
+
+Calculates the ratio of Sinhala characters in a text string or a list of text strings.
+
+```python
+from sinlib.utils.preprocessing import get_sinhala_character_ratio
+
+get_sinhala_character_ratio("මම ගෙදර ගියා.")
+# 1.0
+
+get_sinhala_character_ratio(["මම ගෙදර ගියා.", "This is an example."])
+# [1.0, 0.0]
+```

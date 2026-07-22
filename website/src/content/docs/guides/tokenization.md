@@ -32,7 +32,7 @@ from sinlib import Tokenizer
 # Default: loads vocab from HuggingFace Hub (Ransaka/sinlib)
 tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
 
-# Local directory (must contain vocab.json)
+# Local directory (must contain vocab.json and config.json)
 tokenizer = Tokenizer.from_pretrained("./my_tokenizer/")
 ```
 
@@ -67,7 +67,7 @@ enc.attention_mask  # [1, 1, 1, 1, 1]
 
 ```python
 # Pad to a fixed length
-enc = tokenizer("සිංහල", max_length=8, padding="max_length")
+enc = tokenizer("සිංහල", max_length=8, padding=True)
 enc.input_ids
 # [9, 31, 6, 29, 0, 0, 0, 0]  ← 0 is the pad token ID
 
@@ -80,8 +80,8 @@ enc.input_ids
 ## BOS / EOS tokens
 
 ```python
-enc = tokenizer("සිංහල", add_special_tokens=True)
-# Prepends BOS token ID and appends EOS token ID when configured
+enc = tokenizer("සිංහල", add_bos_token=True)
+# Prepends BOS token ID when configured
 ```
 
 ## Batch encoding
@@ -120,7 +120,7 @@ tokenizer.decode([1, 4, 23, 18, 7, 12, 2], skip_special_tokens=True)
 
 ```python
 vocab = tokenizer.get_vocab()
-# {'[PAD]': 0, '[UNK]': 1, '[BOS]': 2, '[EOS]': 3, 'ආ': 4, ...}
+# {'<|pad|>': 0, '<|unk|>': 1, '<|end_of_text|>': 2, '<|bos|>': 3, 'ආ': 4, ...}
 
 # Token ↔ ID conversion
 tokenizer.convert_tokens_to_ids(['ආ', 'යු'])   # [4, 23]
@@ -132,7 +132,7 @@ tokenizer.convert_ids_to_tokens([4, 23])         # ['ආ', 'යු']
 ```python
 # Save
 tokenizer.save_pretrained("./my_tokenizer/")
-# Writes ./my_tokenizer/vocab.json
+# Writes ./my_tokenizer/vocab.json and ./my_tokenizer/config.json
 
 # Reload later
 tokenizer2 = Tokenizer.from_pretrained("./my_tokenizer/")
@@ -154,12 +154,12 @@ tokenizer.save_pretrained("./custom_tokenizer/")
 |---|---|---|
 | Padding | `tokenizer.pad_token` | `0` |
 | Unknown | `tokenizer.unk_token` | `1` |
-| Beginning of sequence | `tokenizer.bos_token` | `2` |
-| End of sequence | `tokenizer.eos_token` | `3` |
+| Beginning of sequence | `tokenizer.bos_token` | `3` |
+| End of sequence | `tokenizer.eos_token` | `2` |
 
 ```python
-tokenizer.pad_token        # '[PAD]'
+tokenizer.pad_token        # '<|pad|>'
 tokenizer.pad_token_id     # 0
 tokenizer.all_special_tokens
-# ['[PAD]', '[UNK]', '[BOS]', '[EOS]']
+# ['<|pad|>', '<|unk|>', '<|end_of_text|>', '<|bos|>']
 ```
