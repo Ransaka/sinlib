@@ -16,7 +16,7 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid, Tabs, TabItem, Icon } from '@astrojs/starlight/components';
+import { Card, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
 <div class="hero-badge">v0.1.13 · MIT License</div>
 
@@ -28,28 +28,20 @@ pip install sinlib
 
 ## What's inside
 
-<div class="feature-grid">
-  <div class="feature-card">
-    <span class="icon"><Icon name="list-format" /></span>
-    <strong>Phonological Tokenizer</strong>
-    <p>Splits Sinhala text into base consonant + diacritic units. HuggingFace-compatible API.</p>
-  </div>
-  <div class="feature-card">
-    <span class="icon"><Icon name="approve-check" /></span>
-    <strong>Spell Checker</strong>
-    <p>N-gram model backed by a ~45 000-word dictionary. Auto-corrects typos and suggests alternatives.</p>
-  </div>
-  <div class="feature-card">
-    <span class="icon"><Icon name="setting" /></span>
-    <strong>Preprocessing</strong>
-    <p>Remove noise, compute Sinhala character ratios, and batch-process text.</p>
-  </div>
-  <div class="feature-card">
-    <span class="icon"><Icon name="cloud-download" /></span>
-    <strong>HuggingFace Hub</strong>
-    <p>Vocab and weights are fetched automatically from <code>Ransaka/sinlib</code> on first use.</p>
-  </div>
-</div>
+<CardGrid>
+  <Card title="Phonological Tokenizer" icon="list-format">
+    Splits Sinhala text into base consonant + diacritic units. HuggingFace-compatible API.
+  </Card>
+  <Card title="Spell Checker" icon="approve-check">
+    N-gram model backed by a ~45 000-word dictionary. Auto-corrects typos and suggests alternatives.
+  </Card>
+  <Card title="Preprocessing" icon="setting">
+    Remove noise, compute Sinhala character ratios, and batch-process text.
+  </Card>
+  <Card title="HuggingFace Hub" icon="cloud-download">
+    Vocab and weights are fetched automatically from `Ransaka/sinlib` on first use.
+  </Card>
+</CardGrid>
 
 ## Quick start
 
