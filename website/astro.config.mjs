@@ -54,6 +54,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Tokenizer', slug: 'api/tokenizer' },
 						{ label: 'TypoDetector', slug: 'api/spellcheck' },
+						{ label: 'Romanizer', slug: 'api/romanizer' },
 						{ label: 'BatchEncoding', slug: 'api/encoding' },
 						{ label: 'Preprocessing', slug: 'api/preprocessing' },
 					],
