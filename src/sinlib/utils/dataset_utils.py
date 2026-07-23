@@ -5,8 +5,6 @@ DUMMY_FILE_NAME = "vocab"
 
 
 def load_tokenizer():
-    tokenizer = Tokenizer(max_length=MAX_LENGTH)
-    tokenizer.load_from_pretrained(DUMMY_FILE_NAME)
-    return tokenizer
+    return Tokenizer.from_pretrained("Ransaka/sinlib", model_max_length=MAX_LENGTH)
 
 

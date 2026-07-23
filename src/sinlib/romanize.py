@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 
 from .tokenizer import Tokenizer
 from .utils.chars import ALL_SINHALA_CHARACTERS, NUMBERS_AND_PUNCTUATION
-from .utils.preprocessing import load_char_mapper, remove_non_printable
+from .utils.preprocessing import load_char_mapper, remove_non_printable, process_text
 
 
 class Romanizer:
@@ -39,8 +39,7 @@ class Romanizer:
             tokenizer_path: Path to tokenizer vocabulary file
         """
         self.char_mapper = load_char_mapper()
-        self.tokenizer = Tokenizer(max_length=None)
-        self.tokenizer.load_from_pretrained(file_path=None, load_default_tokenizer=True)
+        self.tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
 
     def __call__(self, text: Union[str, List[str]]) -> Union[str, List[str]]:
         """
@@ -67,32 +66,21 @@ class Romanizer:
             Romanized version of the input text
         """
         text = remove_non_printable(text)
-        chars: NDArray = np.array(list(text))
-        
-        # Create mask for Sinhala characters and allowed punctuation
-        sinhala_mask = [
-            char in ALL_SINHALA_CHARACTERS + list(NUMBERS_AND_PUNCTUATION) + [" "]
-            for char in chars
-        ]
-        
-        # Extract Sinhala text
-        sinhala_text = "".join(chars[sinhala_mask]).strip()
-        
-        # Tokenize and decode
-        encodings = self.tokenizer(sinhala_text, truncate_and_pad=False)
-        decoded_chars = [
-            self.tokenizer.token_id_to_token_map[c] for c in encodings
-        ]
-        
-        # Convert to Roman characters
-        romanized_chars = [
-            self.char_mapper.get(ch, ch if ch in NUMBERS_AND_PUNCTUATION.union({" "}) else '')
-            for ch in decoded_chars
-        ]
-        romanized_sinhala = "".join(romanized_chars)
-        
-        # Create word mapping and apply to full text
-        word_mapping = dict(zip(sinhala_text.split(), romanized_sinhala.split()))
-        romanized_words = [word_mapping.get(word, word) for word in text.split()]
-        
-        return " ".join(romanized_words)
+        if not text:
+            return ""
+
+        # Fallback mappings for diacritics/modifiers
+        char_map = dict(self.char_mapper)
+        char_map.setdefault('ං', 'n')
+        char_map.setdefault('ඃ', 'h')
+
+        tokens = process_text(text)
+        res = []
+        for tok in tokens:
+            clean = tok.strip()
+            roman = char_map.get(clean, clean)
+            if tok.endswith(' ') and not roman.endswith(' '):
+                roman += ' '
+            res.append(roman)
+
+        return "".join(res)

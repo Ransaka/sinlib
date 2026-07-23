@@ -21,15 +21,14 @@ def detect_device(force_cpu=False):
 def load_transliterator_model():
     import torch
     from sinlib.utils.models.transliterator_model import BiLSTMTranslator
-    tokenizer = load_tokenizer()
-    input_size = len(tokenizer)
-    output_size = len(tokenizer)
-    hidden_size = HIDDEN_SIZE
     filepath = Path(MODELS_PATH) / CHECKPOINT_NAME
-
     device = detect_device()
-    model = BiLSTMTranslator(input_size, hidden_size, output_size).to(device)
     checkpoint = torch.load(filepath, map_location=device)
+
+    vocab_size = checkpoint["embedding.weight"].shape[0]
+    hidden_size = HIDDEN_SIZE
+
+    model = BiLSTMTranslator(vocab_size, hidden_size, vocab_size).to(device)
     model.load_state_dict(checkpoint)
     return model
 
@@ -43,7 +42,7 @@ def inference(model, tokenizer, input_text):
     # Tokenize and encode input text
     input_encoded = tokenizer(input_text)
     input_tensor = (
-        torch.tensor(input_encoded).unsqueeze(0).to(device)
+        torch.tensor(input_encoded.input_ids).unsqueeze(0).to(device)
     )  # Add batch dimension
 
     with torch.no_grad():

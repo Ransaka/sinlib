@@ -373,18 +373,30 @@ def get_sinhala_character_ratio(
             ignore_non_printable=ignore_non_printable,
         )
         tokenized_text = [tok for tok in tokenized_text if tok != " "]
-        return sinhala_token_count / len(tokenized_text)
+        return sinhala_token_count / len(tokenized_text) if tokenized_text else 0.0
     elif isinstance(text, list):
-        pool = multiprocessing.Pool()
-        partial_process_text = partial(
-            process_text_with_token_counts,
-            ignore_punctuation_and_numbers=ignore_punctuation_and_numbers,
-            ignore_non_printable=ignore_non_printable,
-        )
-        results = pool.map(partial_process_text, text)
-        pool.close()
-        pool.join()
+        if len(text) < 10:
+            results = [
+                process_text_with_token_counts(
+                    t,
+                    ignore_punctuation_and_numbers=ignore_punctuation_and_numbers,
+                    ignore_non_printable=ignore_non_printable,
+                )
+                for t in text
+            ]
+        else:
+            partial_process_text = partial(
+                process_text_with_token_counts,
+                ignore_punctuation_and_numbers=ignore_punctuation_and_numbers,
+                ignore_non_printable=ignore_non_printable,
+            )
+            with multiprocessing.Pool() as pool:
+                results = pool.map(partial_process_text, text)
+
         encodings = [tok[0] for tok in results if tok[0] != " "]
         encodings = [[char for char in enc if char != " "] for enc in encodings]
         sinhala_lengths = [tok[1] for tok in results]
-        return [(l / len(enc)) for enc, l in zip(encodings, sinhala_lengths)]
+        return [
+            (l / len(enc)) if enc else 0.0
+            for enc, l in zip(encodings, sinhala_lengths)
+        ]
