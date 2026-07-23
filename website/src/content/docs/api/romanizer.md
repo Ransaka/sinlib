@@ -37,8 +37,8 @@ romanizer("ආයුබෝවන් සිංහල")
 ### Batch Romanization
 
 ```python
-romanizer(["හෙලෝ", "වර්ල්ඩ්"])
-# ['helo', 'warld']
+romanizer(["මම සිංහල ඉගෙන ගන්නවා", "ලංකාව ලස්සන රටක්"])
+# ['mama sinhala igena gannawa', 'lankawa lassana ratak']
 ```
 
 ### Mixed Content
