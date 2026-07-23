@@ -30,8 +30,14 @@ class Transliterator:
             model_path: Optional path to a custom model file
             tokenizer_path: Optional path to a custom tokenizer file
         """
-        self.model = load_transliterator_model()
-        self.tokenizer = load_tokenizer()
+        try:
+            self.model = load_transliterator_model()
+            self.tokenizer = load_tokenizer()
+        except ImportError:
+            raise ImportError(
+                "Transliterator requires PyTorch. "
+                "Install it with: pip install torch"
+            )
     
     def transliterate(self, text: str) -> str:
         """

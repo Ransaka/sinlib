@@ -1,6 +1,8 @@
 import pytest
 from sinlib import Transliterator
 
+torch = pytest.importorskip("torch", reason="torch not installed; skipping transliterator tests")
+
 
 @pytest.fixture
 def transliterator():
