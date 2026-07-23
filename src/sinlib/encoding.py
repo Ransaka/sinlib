@@ -24,6 +24,9 @@ class BatchEncoding:
     data : dict
         A dictionary whose values are lists of integers.  Expected keys are
         ``"input_ids"`` and optionally ``"attention_mask"``.
+    tensor_type : str, optional
+        If set, converts lists to tensors. Supported values: ``"pt"`` (PyTorch),
+        ``"tf"`` (TensorFlow), ``"np"`` (NumPy).
 
     Examples
     --------
@@ -36,35 +39,26 @@ class BatchEncoding:
     True
     """
 
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: Dict[str, Any], tensor_type: Optional[str] = None) -> None:
         self._data: Dict[str, Any] = data
+        if tensor_type is not None:
+            self.convert_to_tensors(tensor_type)
 
     # ------------------------------------------------------------------
     # Attribute access
     # ------------------------------------------------------------------
 
     @property
-    def input_ids(self) -> List[int]:
+    def input_ids(self) -> Any:
         """
-        List of token IDs.
-
-        Returns
-        -------
-        list of int
-            The encoded token IDs for the input text.
+        Token IDs (list or tensor depending on return_tensors).
         """
         return self._data["input_ids"]
 
     @property
-    def attention_mask(self) -> Optional[List[int]]:
+    def attention_mask(self) -> Any:
         """
         Attention mask (1 for real tokens, 0 for padding).
-
-        Returns
-        -------
-        list of int or None
-            ``1`` for each real token position, ``0`` for padding.
-            ``None`` when the tokenizer was called without padding.
         """
         return self._data.get("attention_mask")
 
@@ -102,6 +96,51 @@ class BatchEncoding:
     # ------------------------------------------------------------------
     # Conversion
     # ------------------------------------------------------------------
+
+    def convert_to_tensors(self, tensor_type: str) -> None:
+        """
+        Convert the internal input lists to tensors.
+        """
+        if tensor_type == "pt":
+            import torch
+            for key, val in self._data.items():
+                if val is not None:
+                    try:
+                        self._data[key] = torch.tensor(val)
+                    except ValueError as e:
+                        raise ValueError(
+                            f"Failed to convert {key} to PyTorch tensor. "
+                            f"Ensure sequences are rectangular (uniform length) or padding is enabled. "
+                            f"Error: {e}"
+                        ) from e
+        elif tensor_type == "tf":
+            import tensorflow as tf
+            for key, val in self._data.items():
+                if val is not None:
+                    try:
+                        self._data[key] = tf.convert_to_tensor(val)
+                    except (ValueError, TypeError) as e:
+                        raise ValueError(
+                            f"Failed to convert {key} to TensorFlow tensor. "
+                            f"Ensure sequences are rectangular (uniform length) or padding is enabled. "
+                            f"Error: {e}"
+                        ) from e
+        elif tensor_type == "np":
+            import numpy as np
+            for key, val in self._data.items():
+                if val is not None:
+                    try:
+                        self._data[key] = np.array(val)
+                    except ValueError as e:
+                        raise ValueError(
+                            f"Failed to convert {key} to NumPy array. "
+                            f"Ensure sequences are rectangular (uniform length) or padding is enabled. "
+                            f"Error: {e}"
+                        ) from e
+        else:
+            raise ValueError(
+                f"Unsupported tensor_type '{tensor_type}'. Use 'pt', 'tf', or 'np'."
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """

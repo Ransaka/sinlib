@@ -1,26 +1,61 @@
 ---
 title: Typo Correction Example
-description: End-to-end spell checking example with sinlib.
+description: End-to-end spell checking and correction with sinlib's hybrid pipeline.
 ---
 
-## Basic correction
+sinlib's `TypoDetector` uses a **three-stage hybrid pipeline** to detect and correct Sinhala spelling errors:
+
+1. **Phonological Trie** — retrieves phonologically close dictionary candidates
+2. **BiGRU Seq2Seq** — generates correction candidates from a neural encoder-decoder
+3. **Stupid Backoff LM** — reranks candidates using a 151k-article news corpus bigram model
+
+---
+
+## Basic sentence correction
 
 ```python
 from sinlib import TypoDetector
 
-detector = TypoDetector.from_pretrained("Ransaka/sinlib")
+detector = TypoDetector.from_pretrained()
 
-result = detector("අපකරියට ගිය")
+result = detector("ගුරුවරයා අපට උගන්වය්")
 print(result)
-# 'අපකීර්තියට ගිය'
+# 'ගුරුවරයා අපට උගන්වයි'
 ```
 
-## Suggestions
+## Diacritic errors
 
 ```python
-suggestions = detector.suggest_correction("අඩිරාජ")
-print(suggestions)
-# ['අධිරාජ']
+result = detector("සිංහල බාෂාව ලස්සනයි")
+print(result)
+# 'සිංහල භාෂාව ලස්සනයි'
+```
+
+## School-related correction
+
+```python
+result = detector("මම පසලට ගියෙමි")
+print(result)
+# 'මම පාසලට ගියෙමි'
+```
+
+## Context-aware suggestions
+
+Passing `prev_word` and `next_word` enables bigram reranking to prefer
+contextually appropriate corrections over phonologically close ones.
+
+```python
+# Without context — returns closest phonological match
+detector.suggest_correction("ලසන")
+# ['වසන', 'ලේඛන', ...]
+
+# With context — promotes the semantically correct candidate
+detector.suggest_correction(
+    "ලසන",
+    prev_word="ලංකාව",
+    next_word="රටක්"
+)
+# ['ලස්සන', ...]
 ```
 
 ## Checking valid words
@@ -30,6 +65,13 @@ print(suggestions)
 result = detector("මගේ ගෙදර ලස්සනයි")
 print(result)
 # 'මගේ ගෙදර ලස්සනයි'
+```
+
+## Detection without correction
+
+```python
+detector.is_word_suspicious("සිංහල")   # False — valid
+detector.is_word_suspicious("සින්හල")  # True  — likely typo
 ```
 
 ## Scoring words manually
@@ -47,9 +89,9 @@ print(prob)
 ## Tuning threshold
 
 ```python
-# Stricter: flag more words
+# Stricter: flag more words as suspicious
 strict = TypoDetector(threshold=1e-6)
 
-# Lenient: only obvious typos
+# Lenient: only flag obvious typos
 lenient = TypoDetector(threshold=1e-12)
 ```

@@ -35,6 +35,7 @@ from typing import List
 
 from sinlib.encoding import BatchEncoding
 from sinlib.tokenizer import Tokenizer
+from sinlib.subword import SubwordTokenizer
 from sinlib.spellcheck import TypoDetector
 from sinlib.romanize import Romanizer
 from sinlib.transliterate import Transliterator  # noqa: F401
@@ -43,6 +44,7 @@ from sinlib.utils import preprocessing
 __all__: List[str] = [
     "BatchEncoding",
     "Tokenizer",
+    "SubwordTokenizer",
     "TypoDetector",
     "Romanizer",
     "preprocessing",

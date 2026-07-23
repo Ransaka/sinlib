@@ -1,0 +1,191 @@
+---
+title: TypoDetector
+description: Full API reference for the sinlib TypoDetector spell checker and hybrid corrector.
+tableOfContents: false
+---
+
+Sinhala spell checker using a hybrid pipeline: Phonological Trie search, Seq2Seq BiGRU neural corrector, and a Stupid Backoff news-corpus language model for context-aware ranking.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-class">Class</span>
+
+## TypoDetector
+
+Main spell checking and correction class. Detects typos using Akshara Trigram scoring + BiGRU sequence labeling and corrects them using a hybrid retrieval-generative pipeline.
+
+### Constructor
+
+<div class="api-signature">
+{`TypoDetector(cache_size=1000, threshold=1e-8, lazy_loading=False)`}
+</div>
+
+#### Parameters
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">cache_size</span></td>
+      <td><span class="param-type">int</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Size of LRU caches for predictions. Default is <code>1000</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">threshold</span></td>
+      <td><span class="param-type">float</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Probability threshold under which a word is marked as a typo. Default is <code>1e-8</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">lazy_loading</span></td>
+      <td><span class="param-type">bool</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>If True, defers downloading/loading weights until first call.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Methods
+
+#### from\_pretrained
+
+Load a pre-trained spell checker from the default repository.
+
+<div class="api-signature">
+{`TypoDetector.from_pretrained(pretrained_model_name_or_path="Ransaka/sinlib")`}
+</div>
+
+---
+
+#### suggest\_correction
+
+Return top spelling corrections for a misspelled word, ranked using Phonological Trie search, BiGRU Seq2Seq generation, and Stupid Backoff context scoring.
+
+<div class="api-signature">
+{`detector.suggest_correction(word, n=3, prev_word=None, next_word=None)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">word</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-required">Required</span></td>
+      <td>Single Sinhala word to correct.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">n</span></td>
+      <td><span class="param-type">int</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Number of suggestions to return. Default is <code>3</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">prev_word</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Preceding word in context for bigram reranking.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">next_word</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Following word in context for bigram reranking.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+#### is\_word\_suspicious
+
+Check if a word is likely a typo using Akshara Trigram + BiGRU labeler.
+
+<div class="api-signature">
+{`detector.is_word_suspicious(word)`}
+</div>
+
+---
+
+#### word\_ngram\_probability
+
+Retrieve Akshara n-gram log-likelihood for a word or phrase.
+
+<div class="api-signature">
+{`detector.word_ngram_probability(word)`}
+</div>
+
+---
+
+#### get\_context\_neg\_log\_prob
+
+Return the Stupid Backoff negative log probability of a candidate word in context.
+
+<div class="api-signature">
+{`detector.get_context_neg_log_prob(prev_word, candidate, next_word)`}
+</div>
+
+</div>
+
+<div class="api-code-col">
+
+### Code Examples
+
+#### Import and Load
+```python
+from sinlib import TypoDetector
+
+detector = TypoDetector.from_pretrained()
+```
+
+#### Sentence Correction (Call)
+```python
+# Correct a full sentence
+corrected = detector("ගුරුවරයා අපට උගන්වය්")
+# 'ගුරුවරයා අපට උගන්වයි'
+
+corrected = detector("සිංහල බාෂාව ලස්සනයි")
+# 'සිංහල භාෂාව ලස්සනයි'
+```
+
+#### Context-Aware Suggestions
+```python
+# Without context
+detector.suggest_correction("පසලට")
+# ['පාසලට', 'පාසැලට', 'පවුලට']
+
+# With surrounding context
+detector.suggest_correction(
+    "ලසන",
+    prev_word="ලංකාව",
+    next_word="රටක්"
+)
+# ['ලස්සන', 'ලේඛන', ...]
+```
+
+#### Detection Only
+```python
+detector.is_word_suspicious("සිංහල")
+# False — valid word
+
+detector.is_word_suspicious("සින්හල")
+# True — likely typo
+```
+
+#### Check Probabilities
+```python
+prob = detector.word_ngram_probability("සිංහල")
+# ~3.2e-05  (higher is more common)
+```
+
+</div>
+</div>

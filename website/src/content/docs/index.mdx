@@ -5,14 +5,12 @@ template: splash
 hero:
   tagline: Sinhala NLP toolkit for Python. Phonological tokenization, n-gram spell checking, and text preprocessing — all in one package.
   image:
-    file: ../../assets/logo.svg
+    file: ../../assets/logo-light.png
   actions:
     - text: Get Started
       link: ./guides/tokenization/
-      icon: right-arrow
     - text: API Reference
       link: ./api/tokenizer/
-      icon: open-book
       variant: minimal
 ---
 
@@ -29,16 +27,16 @@ pip install sinlib
 ## What's inside
 
 <CardGrid>
-  <Card title="Phonological Tokenizer" icon="list-format">
+  <Card title="Phonological Tokenizer">
     Splits Sinhala text into base consonant + diacritic units. HuggingFace-compatible API.
   </Card>
-  <Card title="Spell Checker" icon="approve-check">
+  <Card title="Spell Checker">
     N-gram model backed by a ~45 000-word dictionary. Auto-corrects typos and suggests alternatives.
   </Card>
-  <Card title="Preprocessing" icon="setting">
+  <Card title="Preprocessing">
     Remove noise, compute Sinhala character ratios, and batch-process text.
   </Card>
-  <Card title="HuggingFace Hub" icon="cloud-download">
+  <Card title="HuggingFace Hub">
     Vocab and weights are fetched automatically from `Ransaka/sinlib` on first use.
   </Card>
 </CardGrid>
@@ -80,8 +78,8 @@ pip install sinlib
 
     detector = TypoDetector.from_pretrained("Ransaka/sinlib")
 
-    detector("අපකරියට ගිය")
-    # 'අපකීර්තියට ගිය'
+    detector("ගුරුවරයා අපට උගන්වය්")
+    # 'ගුරුවරයා අපට උගන්වයි'
 
     detector.suggest_correction("අඩිරාජ")
     # ['අධිරාජ']
@@ -113,10 +111,10 @@ Raw Unicode tokenization breaks these apart — producing incorrect representati
 | Raw Unicode | `['ආ', 'ය', 'ු', 'බ', 'ෝ', 'ව', 'න', '්']` — 8 code points |
 
 <CardGrid>
-  <Card title="Tokenization guide" icon="open-book">
+  <Card title="Tokenization guide">
     Learn how the phonological splitter works and how to integrate it in your pipeline. [Read the guide →](./guides/tokenization/)
   </Card>
-  <Card title="Spell checking guide" icon="approve-check-circle">
+  <Card title="Spell checking guide">
     Detect and correct Sinhala typos using the n-gram language model. [Read the guide →](./guides/spellcheck/)
   </Card>
 </CardGrid>

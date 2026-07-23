@@ -135,7 +135,7 @@ def test_check_spelling_typo(mock_typo_detector):
     mock_typo_detector.word_ngram_probability = lambda word, n=2: 1e-10
     
     # Mock suggest_correction
-    mock_typo_detector.suggest_correction = lambda word, n=3: ["correct"]
+    mock_typo_detector.suggest_correction = lambda word, n=3, **kwargs: ["correct"]
     
     result = mock_typo_detector("incorrekt")
     assert result == "correct"

@@ -302,6 +302,7 @@ class Tokenizer:
                 return_attention_mask=return_attention_mask,
                 add_bos_token=add_bos_token,
                 allowed_special_tokens=allowed_special_tokens,
+                return_tensors=return_tensors,
             )
 
         return self._encode_impl(
@@ -312,6 +313,7 @@ class Tokenizer:
             return_attention_mask=return_attention_mask,
             add_bos_token=add_bos_token,
             allowed_special_tokens=allowed_special_tokens,
+            return_tensors=return_tensors,
         )
 
     def encode(
@@ -367,6 +369,7 @@ class Tokenizer:
         return_attention_mask: bool = True,
         add_bos_token: bool = False,
         allowed_special_tokens: Optional[List[str]] = None,
+        return_tensors: Optional[str] = None,
     ) -> BatchEncoding:
         """
         Encode a single string and return a :class:`~sinlib.BatchEncoding`.
@@ -390,6 +393,8 @@ class Tokenizer:
             Prepend the BOS token.  Default ``False``.
         allowed_special_tokens : list of str, optional
             Special tokens to encode rather than skip.
+        return_tensors : str, optional
+            Convert lists to tensors. Supported: ``"pt"``, ``"tf"``, ``"np"``.
 
         Returns
         -------
@@ -413,6 +418,7 @@ class Tokenizer:
             return_attention_mask=return_attention_mask,
             add_bos_token=add_bos_token,
             allowed_special_tokens=allowed_special_tokens,
+            return_tensors=return_tensors,
         )
 
     def tokenize(self, text: str) -> List[str]:
@@ -901,6 +907,7 @@ class Tokenizer:
         return_attention_mask: bool,
         add_bos_token: bool,
         allowed_special_tokens: List[str],
+        return_tensors: Optional[str] = None,
     ) -> BatchEncoding:
         """Encode a single string; returns a BatchEncoding."""
         if not self.vocab_map:
@@ -948,10 +955,11 @@ class Tokenizer:
                 for tid in token_ids
             ]
             return BatchEncoding(
-                {"input_ids": token_ids, "attention_mask": attn_mask}
+                {"input_ids": token_ids, "attention_mask": attn_mask},
+                tensor_type=return_tensors,
             )
 
-        return BatchEncoding({"input_ids": token_ids})
+        return BatchEncoding({"input_ids": token_ids}, tensor_type=return_tensors)
 
     def _batch_encode_impl(
         self,
@@ -962,6 +970,7 @@ class Tokenizer:
         return_attention_mask: bool,
         add_bos_token: bool,
         allowed_special_tokens: List[str],
+        return_tensors: Optional[str] = None,
     ) -> BatchEncoding:
         """Encode a list of strings; returns a BatchEncoding with list-of-lists."""
         if not self.vocab_map:
@@ -1001,10 +1010,11 @@ class Tokenizer:
                 for ids in all_ids
             ]
             return BatchEncoding(
-                {"input_ids": all_ids, "attention_mask": all_masks}
+                {"input_ids": all_ids, "attention_mask": all_masks},
+                tensor_type=return_tensors,
             )
 
-        return BatchEncoding({"input_ids": all_ids})
+        return BatchEncoding({"input_ids": all_ids}, tensor_type=return_tensors)
 
     def _load_default_tokenizer(self) -> None:
         """Download and apply the default pretrained tokenizer from HF Hub."""

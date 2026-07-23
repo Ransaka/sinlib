@@ -1,0 +1,91 @@
+---
+title: Romanizer
+description: Full API reference for the sinlib Romanizer class.
+tableOfContents: false
+---
+
+Converts Sinhala text into Roman (Latin) script using phonological character mapping.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-class">Class</span>
+
+## Romanizer
+
+Class to convert Sinhala scripts into phonetic Latin characters.
+
+### Constructor
+
+<div class="api-signature">
+{`Romanizer()`}
+</div>
+
+No arguments required.
+
+---
+
+### Methods
+
+#### \_\_call\_\_
+
+Execute the romanization pipeline. Accepts a single string or a list of strings.
+
+<div class="api-signature">
+{`romanizer(text)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">text</span></td>
+      <td><span class="param-type">str | list[str]</span><span class="param-badge badge-required">Required</span></td>
+      <td>A single Sinhala text string or a list of texts to romanize.</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="api-code-col">
+
+### Code Examples
+
+#### Import and Load
+```python
+from sinlib import Romanizer
+
+romanizer = Romanizer()
+```
+
+#### Single Text Romanization
+```python
+romanized = romanizer("මම ගෙදර ගියා")
+# 'mama gedara giya'
+```
+
+#### Batch Romanization
+```python
+res = romanizer([
+    "මම සිංහල ඉගෙන ගන්නවා",
+    "ලංකාව ලස්සන රටක්"
+])
+# ['mama sinhala igena gannawa',
+#  'lankawa lassana ratak']
+```
+
+#### Non-Sinhala Content Preservation
+```python
+romanizer("සිංහල 123 english!")
+# 'sinhala 123 english!'
+```
+
+</div>
+</div>

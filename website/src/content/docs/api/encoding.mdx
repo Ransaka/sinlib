@@ -1,0 +1,121 @@
+---
+title: BatchEncoding
+description: API reference for the BatchEncoding return type.
+tableOfContents: false
+---
+
+`BatchEncoding` is the return type of `Tokenizer.__call__`, `Tokenizer.encode_plus()`, and `Tokenizer.batch_encode()`. It provides both attribute-style and dict-style access to tokenizer output.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-class">Class</span>
+
+## BatchEncoding
+
+Dict-like container holding the outputs of the Tokenizer.
+
+### Fields
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Field Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">input_ids</span></td>
+      <td><span class="param-type">list[int] | list[list[int]] | Tensor</span></td>
+      <td>Phonological unit integer IDs mapping the input sequence.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">attention_mask</span></td>
+      <td><span class="param-type">list[int] | list[list[int]] | Tensor</span></td>
+      <td>Mask indicating real elements (<code>1</code>) vs padded indices (<code>0</code>).</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Methods
+
+#### to\_dict
+
+Convert the internal structure to a standard Python dictionary.
+
+<div class="api-signature">
+{`encoding.to_dict()`}
+</div>
+
+#### convert\_to\_tensors
+
+Convert the internal sequence lists into tensors of a specific framework.
+
+<div class="api-signature">
+{`encoding.convert_to_tensors(tensor_type)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">tensor_type</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-required">Required</span></td>
+      <td>Target tensor framework: <code>"pt"</code> (PyTorch), <code>"tf"</code> (TensorFlow), or <code>"np"</code> (NumPy).</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="api-code-col">
+
+### Code Examples
+
+#### Attribute and Dict Access
+```python
+from sinlib import Tokenizer
+tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
+
+encoding = tokenizer("ආයුබෝවන්")
+
+# Access by attribute
+ids = encoding.input_ids
+# [4, 23, 18, 7, 12]
+
+# Access by key lookup
+mask = encoding["attention_mask"]
+# [1, 1, 1, 1, 1]
+```
+
+#### Tensor Conversion
+```python
+# Convert lists to NumPy arrays
+encoding.convert_to_tensors("np")
+type(encoding.input_ids)
+# <class 'numpy.ndarray'>
+
+# Convert lists to PyTorch Tensors
+encoding.convert_to_tensors("pt")
+# Returns torch.Tensor
+```
+
+#### Serialization
+```python
+plain_dict = encoding.to_dict()
+# {"input_ids": [...],
+#  "attention_mask": [...]}
+```
+
+</div>
+</div>

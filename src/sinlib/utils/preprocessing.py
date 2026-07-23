@@ -28,6 +28,12 @@ class Filenames(Enum):
     CHAR_MAPPER = "char_map.json"
     NGRAM_PROBS = "ngram_probs.npy"
     DICTIONARY = "dictionary.npy"
+    AKSHARA_NGRAM = "akshara_ngram.json"
+    AKSHARA_VOCAB = "akshara_vocab.json"
+    BIGRU_DETECTOR = "bigru_detector.pt"
+    BIGRU_CORRECTOR = "bigru_corrector.pt"
+    NEWS_BIGRAMS = "news_bigrams.json"
+    NEWS_UNIGRAMS = "news_unigrams.json"
 
 def download_hub_file(file_name: str) -> str:
     """
@@ -54,6 +60,11 @@ def download_hub_file(file_name: str) -> str:
     >>> path.endswith("vocab.json")
     True
     """
+    from pathlib import Path
+    local_path = Path(__file__).parent / "models" / file_name
+    if local_path.is_file():
+        return str(local_path)
+
     from huggingface_hub.file_download import hf_hub_download
     return hf_hub_download(
         repo_id="Ransaka/sinlib",
@@ -393,10 +404,58 @@ def get_sinhala_character_ratio(
             with multiprocessing.Pool() as pool:
                 results = pool.map(partial_process_text, text)
 
-        encodings = [tok[0] for tok in results if tok[0] != " "]
-        encodings = [[char for char in enc if char != " "] for enc in encodings]
         sinhala_lengths = [tok[1] for tok in results]
         return [
             (l / len(enc)) if enc else 0.0
             for enc, l in zip(encodings, sinhala_lengths)
         ]
+
+
+# ------------------------------------------------------------------
+# Sinhala Normalization, Numerals, and Date Parsers
+# ------------------------------------------------------------------
+
+import datetime
+import unicodedata
+
+def normalize_sinhala(text: str) -> str:
+    """
+    Normalize Sinhala text by cleaning ZWJ/ZWNJ characters, standardizing
+    diacritic sequences, and converting variant representations to NFC.
+
+    Parameters
+    ----------
+    text : str
+        Input Sinhala text to normalize.
+
+    Returns
+    -------
+    str
+        Normalized Sinhala text.
+    """
+    # Clean multiple/redundant ZWJ and ZWNJ
+    text = re.sub(r'\u200d+', '\u200d', text)
+    text = re.sub(r'\u200c+', '\u200c', text)
+
+    # Standard Unicode NFC Normalization
+    text = unicodedata.normalize('NFC', text)
+
+    # Remove duplicate consecutive identical diacritics
+    for d in VOWEL_DIACRITICS:
+        if d:
+            text = re.sub(rf"{d}+", d, text)
+
+    # Map legacy/variant composite diacritics to their canonical equivalents
+    variants_map = {
+        "ො": "ො",
+        "ේ": "ේ",
+        "ෙෞ": "ෞ",
+        "ැ්": "ෑ",
+        "ි්": "ී",
+        "ු්": "ූ"
+    }
+    for variant, canonical in variants_map.items():
+        text = text.replace(variant, canonical)
+
+    return text
+

@@ -1,23 +1,54 @@
-/* Noto Sans Sinhala for Sinhala script */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@400;500;600&display=swap');
+/* ── Typography (loaded via <link> in astro.config.mjs) ───── */
 
-/* ── Brand colour tokens ──────────────────────────────────── */
 :root {
-  --sl-color-accent-low:    hsl(258, 70%, 20%);
-  --sl-color-accent:        hsl(258, 75%, 55%);
-  --sl-color-accent-high:   hsl(258, 80%, 75%);
+  /* Font Overrides */
+  --sl-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: 'Outfit', var(--sl-font);
 
-  /* Tighten up the default font sizing */
-  --sl-text-body: 0.9375rem;
+  /* Brand Color Tokens (Amber & Charcoal) */
+  --color-brand-primary:   #f59e0b;   /* Amber */
+  --color-brand-secondary: #eab308;   /* Yellow/Gold */
+  --color-brand-accent:    #d97706;   /* Darker Amber */
+
+  --sl-color-accent-low:    rgba(245, 158, 11, 0.12);
+  --sl-color-accent:        #f59e0b;
+  --sl-color-accent-high:   #fde68a;
+
+  /* Sizing */
+  --sl-text-body: 0.95rem;
+  --sl-content-width: 75rem;
+}
+
+/* Remove the empty right sidebar (TOC) column and let content expand */
+.right-sidebar-container,
+starlight-toc {
+  display: none !important;
+}
+
+/* Let main content fill the space freed by removing TOC */
+.main-pane {
+  grid-column: 1 / -1;
 }
 
 :root[data-theme='light'] {
-  --sl-color-accent-low:    hsl(258, 80%, 92%);
-  --sl-color-accent:        hsl(258, 65%, 50%);
-  --sl-color-accent-high:   hsl(258, 65%, 35%);
+  --sl-color-accent-low:    rgba(217, 119, 6, 0.08);
+  --sl-color-accent:        #d97706;
+  --sl-color-accent-high:   #78350f;
 }
 
-/* ── Sinhala text ─────────────────────────────────────────── */
+/* Swaps the hero image dynamically based on the active theme */
+:root[data-theme='light'] .hero img,
+:root[data-theme='light'] .hero-image img {
+  content: url('../assets/logo-light.png') !important;
+}
+
+:root[data-theme='dark'] .hero img,
+:root[data-theme='dark'] .hero-image img {
+  content: url('../assets/logo-dark.png') !important;
+}
+
+/* ── Sinhala script ──────────────────────────────────────── */
 .si,
 [lang='si'],
 .sinhala {
@@ -25,48 +56,282 @@
   line-height: 2;
 }
 
-/* Also apply inside code blocks that contain Sinhala characters */
-code:has([lang='si']),
-.sinhala code {
-  font-family: 'Noto Sans Sinhala', monospace;
+/* ── Headings ────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
 }
 
-/* ── Hero section ─────────────────────────────────────────── */
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.3rem 0.85rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background: var(--sl-color-accent-low);
-  color: var(--sl-color-accent-high);
-  border: 1px solid var(--sl-color-accent);
-  margin-bottom: 1.25rem;
+/* Dark-mode heading color */
+:root:not([data-theme='light']) h2,
+:root:not([data-theme='light']) h3,
+:root:not([data-theme='light']) h4,
+:root:not([data-theme='light']) h5,
+:root:not([data-theme='light']) h6 {
+  color: #f1f5f9 !important;
 }
 
-/* ── Starlight content tweaks ─────────────────────────────── */
+/* Light-mode heading color */
+:root[data-theme='light'] h2,
+:root[data-theme='light'] h3,
+:root[data-theme='light'] h4,
+:root[data-theme='light'] h5,
+:root[data-theme='light'] h6 {
+  color: #0f172a !important;
+}
 
-/* Slightly tighter sidebar font */
+/* H1 gradient -- separate from color rule so it works */
+h1 {
+  font-size: 2.5rem !important;
+  line-height: 1.2 !important;
+  margin-bottom: 1.25rem !important;
+}
+
+:root:not([data-theme='light']) h1 {
+  background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme='light'] h1 {
+  background: linear-gradient(135deg, #1e293b 30%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Premium Sidebar ─────────────────────────────────────── */
 .sidebar-content {
+  font-size: 0.875rem !important;
+}
+
+.sidebar-content a {
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem !important;
+  margin: 0.15rem 0;
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-content a[aria-current="page"] {
+  background: var(--sl-color-accent-low) !important;
+  color: var(--sl-color-accent-high) !important;
+  font-weight: 600;
+  border-left: 2px solid var(--sl-color-accent);
+}
+
+/* ── spaCy-style Two Column Grid ─────────────────────────── */
+.api-two-column {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+@media (min-width: 1100px) {
+  .api-two-column {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 3rem;
+  }
+
+  .api-code-col {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+  }
+}
+
+/* ── API Cards & Signatures ──────────────────────────────── */
+.api-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 2.5rem;
+  backdrop-filter: blur(8px);
+}
+
+:root:not([data-theme='light']) .api-card {
+  background: rgba(15, 23, 42, 0.4);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme='light'] .api-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+}
+
+.api-signature {
+  font-family: var(--sl-font-mono);
+  font-size: 0.9rem;
+  border-left: 4px solid var(--color-brand-primary);
+  padding: 1rem 1.25rem;
+  border-radius: 4px 8px 8px 4px;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+:root:not([data-theme='light']) .api-signature {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  border-left-color: var(--color-brand-primary);
+  color: #e2e8f0;
+}
+
+:root[data-theme='light'] .api-signature {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  border-left-color: var(--color-brand-primary);
+  color: #1e293b;
+}
+
+/* ── API Tags / Badges ───────────────────────────────────── */
+.api-tag {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* Dark mode badge colors */
+:root:not([data-theme='light']) .tag-class {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+}
+
+:root:not([data-theme='light']) .tag-method {
+  background: rgba(6, 182, 212, 0.2);
+  color: #67e8f9;
+  border: 1px solid rgba(6, 182, 212, 0.4);
+}
+
+/* Light mode badge colors */
+:root[data-theme='light'] .tag-class {
+  background: rgba(79, 70, 229, 0.1);
+  color: #4338ca;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+
+:root[data-theme='light'] .tag-method {
+  background: rgba(6, 182, 212, 0.1);
+  color: #0e7490;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* ── Parameter Tables ────────────────────────────────────── */
+.api-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+}
+
+.api-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 0.85rem;
 }
 
-/* Code blocks: left accent bar */
-.expressive-code .frame {
-  border-left: 3px solid var(--sl-color-accent) !important;
+.api-table td {
+  padding: 0.75rem;
+  vertical-align: top;
+  font-size: 0.9rem;
 }
 
-/* Inline code colour */
-:not(pre) > code {
+:root:not([data-theme='light']) .api-table th {
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   color: var(--sl-color-accent-high);
-  background-color: var(--sl-color-accent-low);
-  border-radius: 4px;
-  padding: 0.15em 0.4em;
-  font-size: 0.87em;
 }
+
+:root:not([data-theme='light']) .api-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='light'] .api-table th {
+  border-bottom: 2px solid #e2e8f0;
+  color: #1e293b;
+}
+
+:root[data-theme='light'] .api-table td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.param-name {
+  font-family: var(--sl-font-mono);
+  font-weight: 600;
+}
+
+:root:not([data-theme='light']) .param-name { color: #38bdf8; }
+:root[data-theme='light'] .param-name { color: #0284c7; }
+
+.param-type {
+  font-family: var(--sl-font-mono);
+  font-size: 0.82rem;
+}
+
+:root:not([data-theme='light']) .param-type { color: #a78bfa; }
+:root[data-theme='light'] .param-type { color: #7c3aed; }
+
+.param-badge {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+.badge-required {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+:root:not([data-theme='light']) .badge-required {
+  color: #f87171;
+}
+
+.badge-optional {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+:root:not([data-theme='light']) .badge-optional {
+  color: #34d399;
+}
+
+/* ── Code Blocks Overrides ────────────────────────────────── */
+.expressive-code {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+:root:not([data-theme='light']) .expressive-code {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+:root[data-theme='light'] .expressive-code {
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+.expressive-code pre {
+  font-family: var(--sl-font-mono) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+}
+
 
 

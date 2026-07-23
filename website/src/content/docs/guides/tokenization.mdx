@@ -120,9 +120,9 @@ tokenizer.decode([1, 4, 23, 18, 7, 12, 2], skip_special_tokens=True)
 
 ```python
 vocab = tokenizer.get_vocab()
-# {'<|pad|>': 0, '<|unk|>': 1, '<|end_of_text|>': 2, '<|bos|>': 3, 'ආ': 4, ...}
+# {'<|pad|>': 0, '<|unk|>': 1, ...}
 
-# Token ↔ ID conversion
+# Token <-> ID conversion
 tokenizer.convert_tokens_to_ids(['ආ', 'යු'])   # [4, 23]
 tokenizer.convert_ids_to_tokens([4, 23])         # ['ආ', 'යු']
 ```

@@ -1,0 +1,192 @@
+---
+title: Tokenizer
+description: Full API reference for the sinlib Tokenizer class.
+tableOfContents: false
+---
+
+Character-level Sinhala tokenizer with a HuggingFace-compatible API. Splits Sinhala text into phonological units (base consonant + vowel diacritics) and maps them to integer IDs.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-class">Class</span>
+
+## Tokenizer
+
+Main tokenizer class. Combines consonants and diacritics dynamically.
+
+### Constructor
+
+<div class="api-signature">
+{`Tokenizer(model_max_length=None, unk_token="<|unk|>", pad_token="<|pad|>", eos_token="<|end_of_text|>", bos_token="<|bos|>")`}
+</div>
+
+#### Parameters
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">model_max_length</span></td>
+      <td><span class="param-type">int</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Maximum sequence length for padding/truncation. Default is <code>None</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">unk_token</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Token representing unknown characters.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">pad_token</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Token representing padding.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">bos_token</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Beginning of sequence token.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">eos_token</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>End of sequence token.</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+### Methods
+
+#### from\_pretrained
+
+Load a pretrained tokenizer from the HuggingFace Hub or a local path.
+
+<div class="api-signature">
+{`Tokenizer.from_pretrained(pretrained_model_name_or_path, model_max_length=None)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">pretrained_model_name_or_path</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-required">Required</span></td>
+      <td>HuggingFace repo ID or local directory path.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">model_max_length</span></td>
+      <td><span class="param-type">int</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Override maximum sequence length.</td>
+    </tr>
+  </tbody>
+</table>
+
+#### tokenize
+
+Split text into phonological unit token strings.
+
+<div class="api-signature">
+{`tokenizer.tokenize(text)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">text</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-required">Required</span></td>
+      <td>Sinhala input string to split.</td>
+    </tr>
+  </tbody>
+</table>
+
+#### encode
+
+Encode text directly to a list of token IDs.
+
+<div class="api-signature">
+{`tokenizer.encode(text, add_special_tokens=True, add_bos_token=False)`}
+</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Argument</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="param-name">text</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-required">Required</span></td>
+      <td>Sinhala input string to encode.</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="api-code-col">
+
+### Code Examples
+
+#### Import and Load
+```python
+from sinlib import Tokenizer
+
+# Load default tokenizer
+tokenizer = Tokenizer.from_pretrained("Ransaka/sinlib")
+```
+
+#### Tokenization
+```python
+tokens = tokenizer.tokenize("ආයුබෝවන්")
+# ['ආ', 'යු', 'බෝ', 'ව', 'න්']
+```
+
+#### Encoding Single Text
+```python
+# Simple ID list
+ids = tokenizer.encode("ආයුබෝවන්")
+# [4, 23, 18, 7, 12]
+
+# Full BatchEncoding output
+encoding = tokenizer("ආයුබෝවන්")
+# BatchEncoding(input_ids=[4, 23, 18, 7, 12],
+#   attention_mask=[1, 1, 1, 1, 1])
+```
+
+#### Padding and Truncation
+```python
+res = tokenizer(
+    ["ආයුබෝවන්", "සිංහල"],
+    padding=True,
+    truncation=True,
+    max_length=6,
+    return_tensors="np"
+)
+# returns arrays of uniform lengths
+```
+
+</div>
+</div>

@@ -23,10 +23,21 @@ export default defineConfig({
 			title: 'Sinlib',
 			description: 'Sinhala NLP toolkit — phonological tokenization, spell checking, and text preprocessing.',
 			logo: {
-				light: './src/assets/logo.svg',
-				dark: './src/assets/logo.svg',
-				replacesTitle: false,
+				light: './src/assets/logo-light.png',
+				dark: './src/assets/logo-dark.png',
+				replacesTitle: true,
 			},
+			head: [
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
+				{
+					tag: 'link',
+					attrs: {
+						rel: 'stylesheet',
+						href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Sinhala:wght@400;500;600&display=swap',
+					},
+				},
+			],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/Ransaka/sinlib' },
 				{ icon: 'seti:python', label: 'PyPI', href: 'https://pypi.org/project/sinlib/' },
@@ -35,6 +46,7 @@ export default defineConfig({
 				baseUrl: 'https://github.com/Ransaka/sinlib/edit/main/website/',
 			},
 			customCss: ['./src/styles/custom.css'],
+			tableOfContents: false,
 			sidebar: [
 				{
 					label: 'Getting Started',

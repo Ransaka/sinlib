@@ -1,0 +1,120 @@
+---
+title: Preprocessing
+description: API reference for sinlib's low-level Sinhala text preprocessing utilities.
+tableOfContents: false
+---
+
+Low-level Sinhala text processing functions used internally by `Tokenizer`, `TypoDetector`, and `Romanizer`.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-method">Function</span>
+
+## process\_text
+
+Splits a Sinhala string into phonological units (base consonant + vowel diacritics/virama).
+
+<div class="api-signature">
+{`process_text(text)`}
+</div>
+
+---
+
+<span class="api-tag tag-method">Function</span>
+
+## normalize\_sinhala
+
+Cleans duplicate ZWJ/ZWNJs, canonicalizes diacritic ordering, and maps legacy diacritics to NFC.
+
+<div class="api-signature">
+{`normalize_sinhala(text)`}
+</div>
+
+---
+
+<span class="api-tag tag-method">Function</span>
+
+## get\_sinhala\_character\_ratio
+
+Calculates the ratio of Sinhala Unicode block characters in a text string.
+
+<div class="api-signature">
+{`get_sinhala_character_ratio(text)`}
+</div>
+
+---
+
+<span class="api-tag tag-method">Function</span>
+
+## remove\_non\_printable
+
+Removes non-printable characters, keeping ASCII printable (U+0020-U+007E) and Sinhala block (U+0D80-U+0DFF).
+
+<div class="api-signature">
+{`remove_non_printable(text)`}
+</div>
+
+---
+
+<span class="api-tag tag-method">Function</span>
+
+## remove\_english\_characters
+
+Removes ASCII Latin characters (a-z / A-Z) from a text string.
+
+<div class="api-signature">
+{`remove_english_characters(text)`}
+</div>
+
+</div>
+
+<div class="api-code-col">
+
+### Code Examples
+
+#### Phonological Unit Splitting
+```python
+from sinlib.utils.preprocessing import process_text
+
+process_text("ආයුබෝවන්")
+# ['ආ', 'යු', 'බෝ', 'ව', 'න්']
+```
+
+#### Normalization
+```python
+from sinlib.utils.preprocessing import normalize_sinhala
+
+# Standardizes diacritics and clears ZWJ anomalies
+normalize_sinhala("සිංහල")
+```
+
+#### Sinhala Character Ratio
+```python
+from sinlib.utils.preprocessing import (
+    get_sinhala_character_ratio
+)
+
+get_sinhala_character_ratio("මම ගෙදර ගියා.")
+# 1.0
+
+get_sinhala_character_ratio("Hello සිංහල")
+# 0.5
+```
+
+#### Text Cleaning
+```python
+from sinlib.utils.preprocessing import (
+    remove_non_printable,
+    remove_english_characters,
+)
+
+remove_non_printable("මම ගෙදර\x00")
+# 'මම ගෙදර'
+
+remove_english_characters("Hello සිංහල World")
+# 'සිංහල'
+```
+
+</div>
+</div>
