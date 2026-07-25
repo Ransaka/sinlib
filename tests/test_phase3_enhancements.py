@@ -124,4 +124,22 @@ def test_normalize_sinhala():
     assert normalize_sinhala("කේ") == "කේ"
 
 
-
+def test_get_sinhala_character_ratio():
+    from sinlib.utils.preprocessing import get_sinhala_character_ratio
+    
+    # 1. Single string tests
+    assert get_sinhala_character_ratio("මම ගෙදර ගියා.") == 1.0
+    assert get_sinhala_character_ratio("Hello") == 0.0
+    
+    # 2. List < 10 tests
+    ratios_small = get_sinhala_character_ratio(["මම ගෙදර ගියා.", "Hello"])
+    assert len(ratios_small) == 2
+    assert ratios_small[0] == 1.0
+    assert ratios_small[1] == 0.0
+    
+    # 3. List >= 10 tests (triggers multiprocessing pool path)
+    large_list = ["මම ගෙදර ගියා."] * 5 + ["Hello"] * 5
+    ratios_large = get_sinhala_character_ratio(large_list)
+    assert len(ratios_large) == 10
+    assert all(r == 1.0 for r in ratios_large[:5])
+    assert all(r == 0.0 for r in ratios_large[5:])

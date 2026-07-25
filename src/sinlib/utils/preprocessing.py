@@ -404,6 +404,7 @@ def get_sinhala_character_ratio(
             with multiprocessing.Pool() as pool:
                 results = pool.map(partial_process_text, text)
 
+        encodings = [[tok for tok in res[0] if tok != " "] for res in results]
         sinhala_lengths = [tok[1] for tok in results]
         return [
             (l / len(enc)) if enc else 0.0
