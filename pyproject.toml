@@ -1,6 +1,6 @@
 [project]
 name = "sinlib"
-version = "0.2.1"
+version = "0.2.2"
 description = "Sinhala NLP Toolkit"
 authors = [
     { name = "Ransaka", email = "ransaka.ravihara@gmail.com" }
@@ -9,7 +9,8 @@ dependencies = [
     "numpy >= 1.24.0",
     "transformers >= 4.31.0",
     "tqdm >= 4.64.1",
-    "huggingface_hub"
+    "huggingface_hub",
+    "matplotlib>=3.9.4",
 ]
 license = { file = "LICENSE" }
 readme = "README.md"

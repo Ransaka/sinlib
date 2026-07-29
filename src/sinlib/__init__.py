@@ -2,10 +2,10 @@
 Sinlib: A comprehensive library for Sinhala text processing.
 
 Provides tools for tokenization, spell-checking, romanization, and
-transliteration of Sinhala text, along with preprocessing utilities.
+transliteration of Sinhala text, along with preprocessing and visualization utilities.
 
-Available Classes
------------------
+Available Classes & Functions
+-----------------------------
 Tokenizer
     Character-level tokenizer for Sinhala text. Mirrors the HuggingFace
     ``PreTrainedTokenizer`` interface — use ``Tokenizer.from_pretrained()``
@@ -23,6 +23,9 @@ preprocessing
     Utility module exposing ``remove_english_characters``,
     ``remove_non_printable``, and ``get_sinhala_character_ratio``.
 
+setup_matplotlib
+    Configures and returns a FontProperties object for Matplotlib rendering.
+
 Romanizer
     Converts Sinhala text to Roman (Latin) script.
 
@@ -39,7 +42,7 @@ from sinlib.subword import SubwordTokenizer
 from sinlib.spellcheck import TypoDetector
 from sinlib.romanize import Romanizer
 from sinlib.transliterate import Transliterator  # noqa: F401
-from sinlib.utils import preprocessing
+from sinlib.utils import preprocessing, setup_matplotlib
 
 __all__: List[str] = [
     "BatchEncoding",
@@ -48,6 +51,7 @@ __all__: List[str] = [
     "TypoDetector",
     "Romanizer",
     "preprocessing",
+    "setup_matplotlib",
 ]
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"

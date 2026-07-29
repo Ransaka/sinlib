@@ -1,0 +1,49 @@
+---
+title: Visualization
+description: API reference for sinlib's Matplotlib Sinhala text visualization utilities.
+tableOfContents: false
+---
+
+Utility function for setting up zero-configuration Sinhala text rendering in Matplotlib.
+
+<div class="api-two-column">
+<div class="api-desc-col">
+
+<span class="api-tag tag-method">Function</span>
+
+## setup\_matplotlib
+
+Downloads Noto Sans Sinhala from the Hugging Face Hub (if not already cached) and returns a Matplotlib `FontProperties` object configured for Sinhala + English rendering.
+
+<div class="api-signature">
+{`setup_matplotlib()`}
+</div>
+
+### Returns
+- `matplotlib.font_manager.FontProperties`: Font object to pass to Matplotlib text rendering calls via `fontproperties=fp`.
+
+</div>
+
+<div class="api-code-col">
+
+### Code Example
+
+```python
+import matplotlib.pyplot as plt
+from sinlib import setup_matplotlib
+
+fp = setup_matplotlib()
+
+fig, ax = plt.subplots()
+ax.text(
+    0.5, 0.5,
+    "Target Token: 'සිංහල'",
+    fontsize=20,
+    ha="center",
+    fontproperties=fp
+)
+plt.savefig("output.png")
+```
+
+</div>
+</div>
