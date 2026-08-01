@@ -141,15 +141,18 @@ def test_check_spelling_typo(mock_typo_detector):
     assert result == "correct"
 
 
-def test_check_spelling_unusual_word(mock_typo_detector):
-    """Test check_spelling with an unusual but possibly valid word."""
-    mock_typo_detector._dictionary = ["common"]
-    
-    # Mock word_ngram_probability to return a medium probability
-    mock_typo_detector.word_ngram_probability = lambda word, n=2: 1e-7
-    
-    with warnings.catch_warnings(record=True) as w:
-        result = mock_typo_detector("uncommon")
-        assert result == "uncommon"
-        assert len(w) == 1
-        assert "unusual but may not be a typo" in str(w[0].message)
+def test_check_spelling_with_punctuation(mock_typo_detector):
+    """Test that punctuation attached to words is preserved."""
+    mock_typo_detector._dictionary = {"ගෙදර", "පාසල"}
+    result = mock_typo_detector("මම ගෙදර. පාසල,")
+    assert "ගෙදර." in result
+    assert "පාසල," in result
+
+
+def test_unicode_normalization_in_spellcheck(mock_typo_detector):
+    """Test that composite variant diacritics are normalized and matched against dictionary."""
+    mock_typo_detector._dictionary = {"කොළඹ"}
+    mock_typo_detector.trie = None
+    # "කොළඹ" uses composite variant ෙ + ා instead of ො
+    result = mock_typo_detector("කොළඹ")
+    assert result == "කොළඹ"

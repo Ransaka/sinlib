@@ -3,15 +3,15 @@ from __future__ import annotations
 import math
 import warnings
 import json
+import re
 from pathlib import Path
 from difflib import get_close_matches, SequenceMatcher
-from functools import lru_cache
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
 from sinlib.tokenizer import Tokenizer
-from sinlib.utils.preprocessing import download_hub_file, Filenames
+from sinlib.utils.preprocessing import download_hub_file, Filenames, normalize_sinhala, process_text
 
 # Optional PyTorch import for Bi-GRU sequence labeling
 try:
@@ -42,8 +42,8 @@ class AksharaNGram:
         return prob
 
     def score_word(self, word: str) -> float:
-        from sinlib.utils.preprocessing import process_text
-        tokens = process_text(word)
+        normalized = normalize_sinhala(word)
+        tokens = process_text(normalized)
         if not tokens:
             return -999.0
         
@@ -194,7 +194,7 @@ else:
 # Phonological Confusion & Keyboard Layout Proximity
 # ------------------------------------------------------------------
 
-CONFUSING_PAIRS: Set[tuple[str, str]] = {
+CONFUSING_PAIRS: Set[Tuple[str, str]] = {
     ("න", "ණ"), ("ල", "ළ"), ("ස", "ශ"), ("ස", "ෂ"), ("ශ", "ෂ"), ("ර", "ල"),
     ("ත", "ථ"), ("ද", "ධ"), ("ට", "ඨ"), ("ඩ", "ඪ"), ("ප", "ඵ"), ("බ", "භ"),
     ("ක", "ඛ"), ("ග", "ඝ"), ("ච", "ඡ"), ("ජ", "ඣ"),
@@ -258,14 +258,16 @@ def are_characters_keyboard_adjacent(c1: str, c2: str) -> bool:
     k1_w = WIJESEKERA_MAP.get(c1)
     k2_w = WIJESEKERA_MAP.get(c2)
     if k1_w and k2_w:
-        if is_qwerty_adjacent(k1_w.lower(), k2_w.lower()):
-            return True
+        if k1_w.lower() != k2_w.lower():
+            if is_qwerty_adjacent(k1_w.lower(), k2_w.lower()):
+                return True
 
     k1_p = PHONETIC_MAP.get(c1)
     k2_p = PHONETIC_MAP.get(c2)
     if k1_p and k2_p and k1_p != "" and k2_p != "":
-        if is_qwerty_adjacent(k1_p.lower(), k2_p.lower()):
-            return True
+        if k1_p.lower() != k2_p.lower():
+            if is_qwerty_adjacent(k1_p.lower(), k2_p.lower()):
+                return True
 
     return False
 
@@ -324,15 +326,16 @@ def weighted_levenshtein(s1: str, s2: str) -> float:
 class TrieNode:
     def __init__(self):
         self.children: Dict[str, TrieNode] = {}
-        self.word: str = None
+        self.word: Optional[str] = None
 
 class PhonologicalTrie:
     def __init__(self):
         self.root = TrieNode()
+        self._sub_cost_cache: Dict[Tuple[str, str], float] = {}
 
     def insert(self, word: str):
-        from sinlib.utils.preprocessing import process_text
-        tokens = process_text(word)
+        normalized = normalize_sinhala(word)
+        tokens = process_text(normalized)
         if not tokens:
             return
         curr = self.root
@@ -343,7 +346,25 @@ class PhonologicalTrie:
         curr.word = word
 
     def _get_substitution_cost(self, c1: str, c2: str) -> float:
-        return weighted_levenshtein(c1, c2)
+        if c1 == c2:
+            return 0.0
+        cache_key = (c1, c2)
+        if cache_key in self._sub_cost_cache:
+            return self._sub_cost_cache[cache_key]
+
+        DIACRITICS = {"ා", "ැ", "ෑ", "ි", "ී", "ු", "ූ", "ෘ", "ෲ", "ෙ", "ේ", "ෛ", "ො", "ෝ", "ෞ", "ං", "ඃ", "්"}
+        if (c1, c2) in CONFUSING_PAIRS or (c2, c1) in CONFUSING_PAIRS:
+            cost = 0.3
+        elif are_characters_keyboard_adjacent(c1, c2):
+            cost = 0.5
+        elif c1 in DIACRITICS and c2 in DIACRITICS:
+            cost = 0.4
+        else:
+            cost = 1.0
+
+        self._sub_cost_cache[cache_key] = cost
+        self._sub_cost_cache[(c2, c1)] = cost
+        return cost
 
     def _search_recursive(self, node: TrieNode, token: str, previous_row: List[float], 
                           search_tokens: List[str], max_cost: float, results: List[Tuple[float, str]]):
@@ -374,8 +395,8 @@ class PhonologicalTrie:
                 self._search_recursive(child_node, next_token, current_row, search_tokens, max_cost, results)
 
     def search(self, word: str, max_cost: float = 1.5) -> List[Tuple[float, str]]:
-        from sinlib.utils.preprocessing import process_text
-        search_tokens = process_text(word)
+        normalized = normalize_sinhala(word)
+        search_tokens = process_text(normalized)
         if not search_tokens:
             return []
             
@@ -448,6 +469,8 @@ class TypoDetector:
         self.news_unigrams: Optional[Dict] = None
         self.bigru_corrector: Optional[BiGRUSeq2Seq] = None
         self.has_neural_corrector: bool = False
+
+        self._suggestion_cache: Dict[Tuple[str, int, Optional[str], Optional[str]], List[str]] = {}
 
         if not lazy_loading:
             self._ensure_loaded()
@@ -598,19 +621,22 @@ class TypoDetector:
         2. Bi-GRU Sequence Labeler validity scores.
         """
         self._ensure_loaded()
+        normalized_word = normalize_sinhala(word)
+        if normalized_word in self._dictionary or word in self._dictionary:
+            return False
         
         # 1. Akshara Trigram Score Check via word_ngram_probability
-        prob = self.word_ngram_probability(word)
+        prob = self.word_ngram_probability(normalized_word)
         if prob < self._threshold:
             return True
             
         # 2. PyTorch Bi-GRU Sequence Labeler Check
-        if self.has_neural_labeler and self._bigru_detector is not None:
-            from sinlib.utils.preprocessing import process_text
-            tokens = process_text(word)
+        if self.has_neural_labeler and self._bigru_detector is not None and self._akshara_vocab:
+            tokens = process_text(normalized_word)
             if not tokens:
                 return True
-            input_ids = [self._akshara_vocab.get(t, self._akshara_vocab["<UNK>"]) for t in tokens]
+            unk_id = self._akshara_vocab.get("<UNK>", 0)
+            input_ids = [self._akshara_vocab.get(t, unk_id) for t in tokens]
             input_tensor = torch.tensor([input_ids], dtype=torch.long)
             with torch.no_grad():
                 probs = self._bigru_detector(input_tensor)[0].tolist()
@@ -620,9 +646,9 @@ class TypoDetector:
                     
         return False
 
-    @lru_cache(maxsize=1000)
     def word_ngram_probability(self, word: str, n: int = 2) -> float:
         self._ensure_loaded()
+        word = normalize_sinhala(word)
         if len(self._akshara_ngram.vocab) == 0:
             token_ids = self._tokenizer.encode(word)
             prob = 1.0
@@ -632,37 +658,39 @@ class TypoDetector:
             return prob
             
         score = self._akshara_ngram.score_word(word)
-        # Shift log probability score dynamically to map default threshold 1e-8 to -3.2 log-prob
-        return math.pow(10, score - 4.8)
+        # Convert average natural log-probability score to exponential probability
+        return math.exp(score)
 
     def get_context_neg_log_prob(self, prev_word: Optional[str], candidate: str, next_word: Optional[str]) -> float:
         """Calculate cumulative negative log probability of candidate using Stupid Backoff."""
         neg_log = 0.0
         default_unigram_prob = 1e-8
-        p_candidate = self.news_unigrams.get(candidate, default_unigram_prob) if self.news_unigrams else default_unigram_prob
+        cand_norm = normalize_sinhala(candidate)
+        p_candidate = self.news_unigrams.get(cand_norm, self.news_unigrams.get(candidate, default_unigram_prob)) if self.news_unigrams else default_unigram_prob
         
         if prev_word:
-            bigram1 = f"{prev_word} {candidate}"
+            prev_norm = normalize_sinhala(prev_word)
+            bigram1 = f"{prev_norm} {cand_norm}"
             if self.news_bigrams and bigram1 in self.news_bigrams:
                 prob1 = self.news_bigrams[bigram1]
             else:
                 prob1 = 0.4 * p_candidate
-            neg_log += -math.log10(prob1)
+            neg_log += -math.log10(max(prob1, 1e-12))
             
         if next_word:
-            bigram2 = f"{candidate} {next_word}"
+            next_norm = normalize_sinhala(next_word)
+            bigram2 = f"{cand_norm} {next_norm}"
             if self.news_bigrams and bigram2 in self.news_bigrams:
                 prob2 = self.news_bigrams[bigram2]
             else:
                 prob2 = 0.4 * p_candidate
-            neg_log += -math.log10(prob2)
+            neg_log += -math.log10(max(prob2, 1e-12))
             
         if not prev_word and not next_word:
-            neg_log = -math.log10(p_candidate)
+            neg_log = -math.log10(max(p_candidate, 1e-12))
             
         return neg_log
 
-    @lru_cache(maxsize=1000)
     def suggest_correction(self, word: str, n: int = 3, prev_word: Optional[str] = None, 
                            next_word: Optional[str] = None) -> List[str]:
         """
@@ -670,7 +698,12 @@ class TypoDetector:
         and Stupid Backoff context ranking.
         """
         self._ensure_loaded()
-        
+        word = normalize_sinhala(word)
+
+        cache_key = (word, n, prev_word, next_word)
+        if cache_key in self._suggestion_cache:
+            return self._suggestion_cache[cache_key]
+
         candidates = {}  # Map candidate_word -> edit_distance_cost
         
         # 1. Coarse filter using difflib to guarantee backward/mock compatibility
@@ -687,18 +720,18 @@ class TypoDetector:
         # 3. Generative Neural Corrector (only when dictionary is fully loaded)
         if self.has_neural_corrector and self.bigru_corrector is not None and isinstance(self._dictionary, set) and len(self._dictionary) > 100:
             try:
-                from sinlib.utils.preprocessing import process_text
                 tokens = process_text(word)
                 if tokens:
                     bos_idx = self._akshara_vocab.get("<BOS>", 1)
                     eos_idx = self._akshara_vocab.get("<EOS>", 2)
-                    input_ids = [self._akshara_vocab.get(t, self._akshara_vocab["<UNK>"]) for t in tokens]
+                    unk_id = self._akshara_vocab.get("<UNK>", 0)
+                    input_ids = [self._akshara_vocab.get(t, unk_id) for t in tokens]
                     input_tensor = torch.tensor([input_ids], dtype=torch.long)
                     beams = self.bigru_corrector.beam_decode(input_tensor, bos_idx, eos_idx, beam_width=3, max_len=16)
                     
                     id_to_tok = {v: k for k, v in self._akshara_vocab.items()}
                     for score, seq, _ in beams:
-                        cand_tokens = [id_to_tok[idx] for idx in seq if idx not in (bos_idx, eos_idx, 0, self._akshara_vocab["<UNK>"])]
+                        cand_tokens = [id_to_tok[idx] for idx in seq if idx not in (bos_idx, eos_idx, 0, unk_id)]
                         cand_word = "".join(cand_tokens)
                         if cand_word:
                             cost = weighted_levenshtein(word, cand_word)
@@ -709,7 +742,10 @@ class TypoDetector:
                 pass
                 
         if not candidates:
-            return ["No suggestion"]
+            res = ["No suggestion"]
+            if len(self._suggestion_cache) < self._cache_size:
+                self._suggestion_cache[cache_key] = res
+            return res
             
         # 4. Contextual Reranking using Stupid Backoff
         scored = []
@@ -719,7 +755,17 @@ class TypoDetector:
             scored.append((score, cand))
             
         scored.sort(key=lambda x: x[0])
-        return [cand for _, cand in scored[:n]]
+        result = [cand for _, cand in scored[:n]]
+        if len(self._suggestion_cache) < self._cache_size:
+            self._suggestion_cache[cache_key] = result
+        return result
+
+    def _extract_punctuation(self, token: str) -> Tuple[str, str, str]:
+        """Extract leading punctuation, core Sinhala word, and trailing punctuation from a token."""
+        match = re.match(r"^([^\w\u0D80-\u0DFF]*)([\w\u0D80-\u0DFF]+)([^\w\u0D80-\u0DFF]*)$", token, re.UNICODE)
+        if match:
+            return match.group(1), match.group(2), match.group(3)
+        return "", token, ""
 
     def __call__(self, text: str) -> str:
         """
@@ -728,38 +774,41 @@ class TypoDetector:
         """
         self._ensure_loaded()
         corrected: List[str] = []
-        words = text.split() if isinstance(text, str) else [str(text)]
+        raw_tokens = text.split() if isinstance(text, str) else [str(text)]
+        parsed_tokens = [self._extract_punctuation(t) for t in raw_tokens]
+        words = [p[1] for p in parsed_tokens]
         n_words = len(words)
 
-        for idx, word in enumerate(words):
+        for idx, (leading, word, trailing) in enumerate(parsed_tokens):
             try:
-                if word in self._dictionary:
-                    corrected.append(word)
+                if not word:
+                    corrected.append(leading + trailing)
                     continue
 
-                if self.is_word_suspicious(word):
+                norm_word = normalize_sinhala(word)
+                if norm_word in self._dictionary or word in self._dictionary:
+                    corrected.append(leading + norm_word + trailing)
+                    continue
+
+
+                if self.is_word_suspicious(norm_word):
                     prev_word = words[idx - 1] if idx > 0 else None
                     next_word = words[idx + 1] if idx < n_words - 1 else None
 
-                    suggestions = self.suggest_correction(word, n=5, prev_word=prev_word, next_word=next_word)
+                    suggestions = self.suggest_correction(norm_word, n=5, prev_word=prev_word, next_word=next_word)
                     if not suggestions or suggestions[0] == "No suggestion":
-                        corrected.append(word)
+                        corrected.append(leading + word + trailing)
                     else:
-                        corrected.append(suggestions[0])
+                        corrected.append(leading + suggestions[0] + trailing)
                 else:
-                    warnings.warn(
-                        f"'{word}' is unusual but may not be a typo.",
-                        UserWarning,
-                        stacklevel=2,
-                    )
-                    corrected.append(word)
+                    corrected.append(leading + word + trailing)
 
             except Exception as exc:
                 warnings.warn(
                     f"Error processing word '{word}': {exc}",
                     stacklevel=2,
                 )
-                corrected.append(word)
+                corrected.append(leading + word + trailing)
 
         return " ".join(corrected)
 
