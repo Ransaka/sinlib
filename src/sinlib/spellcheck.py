@@ -622,8 +622,6 @@ class TypoDetector:
         """
         self._ensure_loaded()
         normalized_word = normalize_sinhala(word)
-        if normalized_word in self._dictionary or word in self._dictionary:
-            return False
         
         # 1. Akshara Trigram Score Check via word_ngram_probability
         prob = self.word_ngram_probability(normalized_word)
@@ -658,8 +656,9 @@ class TypoDetector:
             return prob
             
         score = self._akshara_ngram.score_word(word)
-        # Convert average natural log-probability score to exponential probability
-        return math.exp(score)
+        # Shift log probability score dynamically to map default threshold 1e-8 to -3.2 log-prob
+        return math.pow(10, score - 4.8)
+
 
     def get_context_neg_log_prob(self, prev_word: Optional[str], candidate: str, next_word: Optional[str]) -> float:
         """Calculate cumulative negative log probability of candidate using Stupid Backoff."""
