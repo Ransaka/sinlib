@@ -69,6 +69,7 @@ export default defineConfig({
 						{ label: 'Romanizer', slug: 'api/romanizer' },
 						{ label: 'BatchEncoding', slug: 'api/encoding' },
 						{ label: 'Preprocessing', slug: 'api/preprocessing' },
+						{ label: 'Visualization', slug: 'api/visualization' },
 					],
 				},
 				{
@@ -76,6 +77,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Tokenization', slug: 'examples/tokenization' },
 						{ label: 'Typo Correction', slug: 'examples/typo-correction' },
+						{ label: 'Visualization', slug: 'examples/visualization' },
 					],
 				},
 			],

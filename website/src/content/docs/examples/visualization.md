@@ -1,4 +1,7 @@
-# Matplotlib Sinhala Text Visualization
+---
+title: Sinhala Text Visualization
+description: Example of Matplotlib Sinhala text visualization with sinlib.
+---
 
 `sinlib` provides a zero-configuration utility `setup_matplotlib()` to resolve and configure Sinhala text rendering in Matplotlib.
 
