@@ -6,6 +6,6 @@ build:
     nodejs: "20"
   commands:
     - cd website && npm ci
-    - cd website && npm run build
+    - cd website && ASTRO_TELEMETRY_DISABLED=1 npm run build
     - mkdir -p $READTHEDOCS_OUTPUT/html
     - cp -r website/dist/* $READTHEDOCS_OUTPUT/html/
