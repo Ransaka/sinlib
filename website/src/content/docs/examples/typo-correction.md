@@ -31,18 +31,10 @@ print(result)
 # 'සිංහල භාෂාව ලස්සනයි'
 ```
 
-## School-related correction
-
-```python
-result = detector("මම පසලට ගියෙමි")
-print(result)
-# 'මම පාසලට ගියෙමි'
-```
 
 ## Context-aware suggestions
 
-Passing `prev_word` and `next_word` enables bigram reranking to prefer
-contextually appropriate corrections over phonologically close ones.
+Passing `prev_word` and `next_word` enables context-aware re-ranking. This does not use neural networks; instead, it uses a **statistical Bigram Language Model** compiled from a 151k-article news corpus evaluated using the **Stupid Backoff** algorithm. It promotes semantically and grammatically plausible candidate corrections over phonologically closer ones in specific contexts.
 
 ```python
 # Without context — returns closest phonological match
