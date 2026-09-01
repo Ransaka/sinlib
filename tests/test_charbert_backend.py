@@ -142,11 +142,12 @@ def test_neural_pass_applies_correction(neural_detector):
     assert result == "මම ගෙදර යන්න ඕනේ"
 
 
-def test_neural_pass_skipped_on_clean_in_dictionary_sentence(neural_detector):
-    # All words in dictionary and no structural noise -> no neural call
+def test_clean_in_dictionary_sentence_unchanged(neural_detector):
+    # Clean sentence: the model is consulted, but its (unchanged) output is
+    # rejected by the acceptance guard, so the text is returned as-is.
     result = neural_detector("ගෙදර පොත")
     backend = FakeCharBERTBackend.instances[0]
-    assert len(backend.sentence_calls) == 0
+    assert len(backend.sentence_calls) == 1
     assert result == "ගෙදර පොත"
 
 

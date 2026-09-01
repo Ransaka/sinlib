@@ -100,9 +100,8 @@ Notes:
 
 - **Default behavior is unchanged** — without `neural_backend` the detector is
   purely statistical and requires no torch.
-- Neural corrections are gated: clean in-dictionary sentences never hit the
-  model, and a candidate is accepted only if it scores no worse than the input
-  (hallucination guard).
+- A neural candidate is accepted only if it scores no worse than the input
+  (hallucination guard), so already-clean text is never degraded.
 - If the checkpoint cannot be downloaded, the detector degrades gracefully to
   statistical-only correction with a warning.
 

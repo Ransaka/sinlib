@@ -143,10 +143,10 @@ detector("ක්රීඩාව")
 
 - Without `neural_backend`, behaviour is unchanged and purely statistical — no
   torch required.
-- In `"seq2seq"` / `"hybrid"` modes, the neural pass only runs when structural
-  noise is detected (Latin-script tokens, ZWJ-damaged ligatures, whitespace
-  artifacts) or a word cannot be fixed from the dictionary. Clean
-  in-dictionary sentences never touch the model.
+- In `"seq2seq"` / `"hybrid"` modes, the model runs on every sentence: real-word
+  typos (e.g. sibilant confusion) and word split/fusion artifacts consist of
+  valid dictionary words, so no cheap heuristic can pre-detect them. On GPU the
+  beam search pass takes well under a second per sentence.
 - A neural candidate is accepted only if it is no noisier than the input
   (hallucination guard), so clean text is never "corrected" into garbage.
 - If the checkpoint cannot be downloaded, the detector degrades gracefully to

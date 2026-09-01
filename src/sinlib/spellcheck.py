@@ -4,6 +4,7 @@ import math
 import warnings
 import json
 import re
+import traceback
 from pathlib import Path
 from difflib import get_close_matches, SequenceMatcher
 from typing import Dict, List, Optional, Set, Tuple
@@ -663,20 +664,17 @@ class TypoDetector:
 
     def _try_neural_sentence(self, text: str) -> Optional[str]:
         """
-        Runs the CharBERT seq2seq neural pass over a sentence when structural
-        noise or unfixable suspicious words are detected. Returns the neural
-        correction if it passes the acceptance guard, otherwise None.
+        Runs the CharBERT seq2seq neural pass over a sentence and returns the
+        neural correction if it passes the acceptance guard, otherwise None.
+
+        The model runs on every non-empty sentence: real-word typos
+        (e.g. sibilant confusion) and word split/fusion artifacts consist of
+        perfectly valid dictionary words and cannot be detected by any cheap
+        statistical heuristic. The acceptance guard — the neural output must
+        score no worse than the input — is what protects already-clean text
+        from spurious "corrections".
         """
         if not text or not text.strip() or not self.has_charbert:
-            return None
-
-        # Trigger gate: structural noise or any out-of-dictionary word
-        words = [self._extract_punctuation(t)[1] for t in text.split()]
-        trigger = CharBERTBackend.has_structural_noise(text) or any(
-            w and (w not in self._dictionary and normalize_sinhala(w) not in self._dictionary)
-            for w in words
-        )
-        if not trigger:
             return None
 
         if text in self._neural_sentence_cache:
@@ -687,8 +685,13 @@ class TypoDetector:
             candidate = self._charbert.correct_sentence(
                 text, num_beams=self._backend_num_beams
             ).strip()
-        except Exception as exc:
-            warnings.warn(f"CharBERT neural correction failed: {exc}", RuntimeWarning)
+        except Exception:
+            # Include the traceback: identical warnings are deduplicated by the
+            # warnings module, so a short message would hide repeated failures.
+            warnings.warn(
+                "CharBERT neural correction failed:\n" + traceback.format_exc(),
+                RuntimeWarning,
+            )
 
         result: Optional[str] = None
         if candidate and candidate != text:
@@ -934,8 +937,19 @@ class TypoDetector:
         using Phonological Trie search, BiGRU Seq2Seq, and Stupid Backoff LM.
         """
         self._ensure_loaded()
+
+        # Neural-first pass (seq2seq / hybrid modes): when structural noise or
+        # out-of-dictionary words are present, run the CharBERT model on the
+        # RAW input BEFORE the statistical word loop, so that word-level
+        # replacements cannot corrupt the sentence the model conditions on.
+        neural_done: Optional[str] = None
+        if self.neural_backend in ("seq2seq", "hybrid"):
+            neural_done = self._try_neural_sentence(text)
+
+        work_text = neural_done if neural_done is not None else text
+
         corrected: List[str] = []
-        raw_tokens = text.split() if isinstance(text, str) else [str(text)]
+        raw_tokens = work_text.split() if isinstance(work_text, str) else [str(work_text)]
         parsed_tokens = [self._extract_punctuation(t) for t in raw_tokens]
         words = [p[1] for p in parsed_tokens]
         n_words = len(words)
@@ -979,8 +993,9 @@ class TypoDetector:
 
         result_text = " ".join(corrected)
 
-        # Open-vocabulary neural sentence pass (seq2seq / hybrid modes)
-        if self.neural_backend in ("seq2seq", "hybrid"):
+        # Fallback neural pass (seq2seq / hybrid modes): only when the
+        # neural-first pass did not already handle this sentence.
+        if self.neural_backend in ("seq2seq", "hybrid") and neural_done is None:
             neural_sentence = self._try_neural_sentence(result_text)
             if neural_sentence is not None:
                 result_text = neural_sentence

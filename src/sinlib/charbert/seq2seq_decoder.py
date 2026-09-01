@@ -78,7 +78,11 @@ class SinhalaCharBERTDecoderLayer(nn.Module):
             key=hidden_states,
             value=hidden_states,
             attn_mask=causal_mask,
-            need_weights=False,
+            # need_weights=True forces the math code path of
+            # nn.MultiheadAttention; the fused fast path has shown
+            # device-dependent failures with 2-D float causal masks
+            # on some CUDA builds.
+            need_weights=True,
         )
         hidden_states = self.self_attn_layer_norm(residual + self.dropout(attn_out))
 
