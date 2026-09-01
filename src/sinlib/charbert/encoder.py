@@ -120,6 +120,25 @@ class SinhalaCharBERTEncoder(nn.Module):
         all_char_hidden_states: List[torch.Tensor] = []
         all_attentions: List[torch.Tensor] = []
 
+        # Normalize the attention mask to the 4-D extended additive format
+        # (batch, 1, 1, seq_len) expected by transformers' attention
+        # implementations. Newer versions of transformers (>= 4.56) index the
+        # mask as attention_mask[:, :, :, :key_len] and crash with
+        # "too many indices for tensor of dimension 2" if a 2-D padding mask
+        # is passed straight through.
+        if attention_mask is not None and attention_mask.dim() != 4:
+            if attention_mask.dim() == 2:
+                mask = attention_mask[:, None, None, :]
+            elif attention_mask.dim() == 3:
+                mask = attention_mask[:, None, :, :]
+            else:
+                raise ValueError(
+                    f"Unsupported attention_mask dims: {attention_mask.dim()}"
+                )
+            # Convert 1/0 padding mask to an additive mask (0 keep, -inf drop)
+            dtype = token_hidden_states.dtype
+            attention_mask = (1.0 - mask.to(dtype)) * torch.finfo(dtype).min
+
         curr_token = token_hidden_states
         curr_char = char_hidden_states
 
