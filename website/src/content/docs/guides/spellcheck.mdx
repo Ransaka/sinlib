@@ -101,9 +101,62 @@ words = detector.get_dictionary()   # set[str]
 probs = detector.get_ngram_probs()  # dict
 ```
 
+## Neural typo correction (optional, CharBERT)
+
+Version 0.3.0 adds an optional neural backend backed by **Sinhala-CharBERT** —
+a dual-channel (subword + phonological akshara) seq2seq model. It handles noise
+classes the statistical pipeline cannot fix: Singlish transliteration,
+dialectal morphology (`යන්ඩ` → `යන්න`), ZWJ-damaged ligatures
+(`ක්රීඩාව` → `ක්‍රීඩාව`), split/fused words, and Unicode decomposition errors.
+
+Install the optional dependency and pick a backend mode:
+
+```python
+from sinlib import TypoDetector
+
+# "denoise"  - bounded word-level neural fix when dictionary suggestions fail
+# "seq2seq"  - open-vocabulary sentence-level fix when structural noise is detected
+# "hybrid"   - both, in cascade (recommended)
+detector = TypoDetector(neural_backend="hybrid")
+
+detector("මම ගෙදර යන්ඩ ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'
+
+detector("මම gedara යන්න ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'
+
+detector("ක්රීඩාව")
+# 'ක්‍රීඩාව'
+```
+
+### Constructor keywords
+
+| Keyword | Default | Description |
+|---|---|---|
+| `neural_backend` | `None` | `None`, `"denoise"`, `"seq2seq"`, or `"hybrid"` |
+| `backend_model` | `Ransaka/sinhala-charbert-seq2seq` | HF Hub repo id or a local checkpoint directory containing `pytorch_model.bin` + `char_vocab.json` |
+| `backend_device` | auto (cuda > mps > cpu) | Torch device for the model |
+| `backend_revision` | `None` | Pin a specific HF Hub revision |
+| `backend_num_beams` | `4` | Beam width for seq2seq generation |
+
+### How the gates work
+
+- Without `neural_backend`, behaviour is unchanged and purely statistical — no
+  torch required.
+- In `"seq2seq"` / `"hybrid"` modes, the neural pass only runs when structural
+  noise is detected (Latin-script tokens, ZWJ-damaged ligatures, whitespace
+  artifacts) or a word cannot be fixed from the dictionary. Clean
+  in-dictionary sentences never touch the model.
+- A neural candidate is accepted only if it is no noisier than the input
+  (hallucination guard), so clean text is never "corrected" into garbage.
+- If the checkpoint cannot be downloaded, the detector degrades gracefully to
+  statistical-only correction with a warning.
+
 ## Limitations
 
-- Corrections are made word-by-word; the model has no sentence context.
+- Statistical correction is word-by-word; the model has no sentence context
+  (the optional neural backend does operate on full sentences).
 - Only the top suggestion replaces a typo — alternatives available via `suggest_correction()`.
 - The dictionary covers general Sinhala vocabulary; domain-specific or neologistic words may be flagged.
-- Romanised Sinhala (Singlish) is not supported.
+- Romanised Sinhala (Singlish) and structural noise are only handled by the
+  optional CharBERT backend described above.

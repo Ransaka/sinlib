@@ -47,6 +47,31 @@ Main spell checking and correction class. Detects typos using Akshara Trigram sc
       <td><span class="param-type">bool</span><span class="param-badge badge-optional">Optional</span></td>
       <td>If True, defers downloading/loading weights until first call.</td>
     </tr>
+    <tr>
+      <td><span class="param-name">neural_backend</span></td>
+      <td><span class="param-type">str | None</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Optional CharBERT neural correction mode: <code>None</code>, <code>&quot;denoise&quot;</code>, <code>&quot;seq2seq&quot;</code>, or <code>&quot;hybrid&quot;</code>. Default <code>None</code> (statistical only).</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">backend_model</span></td>
+      <td><span class="param-type">str</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>HF Hub repo id or local checkpoint directory for the CharBERT model. Default <code>&quot;Ransaka/sinhala-charbert-seq2seq&quot;</code>.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">backend_device</span></td>
+      <td><span class="param-type">str | None</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Torch device (cuda &gt; mps &gt; cpu by default).</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">backend_revision</span></td>
+      <td><span class="param-type">str | None</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Pin a specific HF Hub revision of the CharBERT checkpoint.</td>
+    </tr>
+    <tr>
+      <td><span class="param-name">backend_num_beams</span></td>
+      <td><span class="param-type">int</span><span class="param-badge badge-optional">Optional</span></td>
+      <td>Beam width for seq2seq generation. Default <code>4</code>.</td>
+    </tr>
   </tbody>
 </table>
 
@@ -185,6 +210,27 @@ detector.is_word_suspicious("සින්හල")
 ```python
 prob = detector.word_ngram_probability("සිංහල")
 # ~3.2e-05  (higher is more common)
+```
+
+#### Neural Correction (CharBERT, optional)
+```python
+# pip install "sinlib[charbert]"
+detector = TypoDetector(neural_backend="hybrid")
+
+detector("මම ගෙදර යන්ඩ ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'  (dialectal morphology)
+
+detector("මම gedara යන්න ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'  (Singlish code-mixing)
+
+detector("ක්රීඩාව")
+# 'ක්‍රීඩාව'  (ZWJ-damaged ligature)
+
+# Point at a local checkpoint instead of the Hub
+detector = TypoDetector(
+    neural_backend="seq2seq",
+    backend_model="/path/to/checkpoint",
+)
 ```
 
 </div>
