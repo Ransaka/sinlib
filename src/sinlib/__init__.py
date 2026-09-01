@@ -17,7 +17,13 @@ BatchEncoding
 
 TypoDetector
     N-gram–based spell checker for Sinhala. Use
-    ``TypoDetector.from_pretrained()`` or instantiate directly.
+    ``TypoDetector.from_pretrained()`` or instantiate directly. Optionally
+    accepts ``neural_backend="seq2seq" | "denoise" | "hybrid"`` to delegate
+    hard cases to a CharBERT neural corrector.
+
+CharBERTBackend
+    Loader/corrector for published Sinhala-CharBERT seq2seq checkpoints
+    (HF Hub or local directory). See ``sinlib.charbert``.
 
 preprocessing
     Utility module exposing ``remove_english_characters``,
@@ -42,6 +48,7 @@ from sinlib.subword import SubwordTokenizer
 from sinlib.spellcheck import TypoDetector
 from sinlib.romanize import Romanizer
 from sinlib.transliterate import Transliterator  # noqa: F401
+from sinlib.charbert import CharBERTBackend
 from sinlib.utils import preprocessing, setup_matplotlib
 
 __all__: List[str] = [
@@ -49,9 +56,10 @@ __all__: List[str] = [
     "Tokenizer",
     "SubwordTokenizer",
     "TypoDetector",
+    "CharBERTBackend",
     "Romanizer",
     "preprocessing",
     "setup_matplotlib",
 ]
 
-__version__ = "0.2.4"
+__version__ = "0.3.0"

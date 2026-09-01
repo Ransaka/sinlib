@@ -60,6 +60,52 @@ detector.suggest_correction("අඩිරාජ")
 # ['අධිරාජ']
 ```
 
+### Neural Typo Correction (optional, CharBERT)
+
+TypoDetector can optionally delegate hard cases to a **Sinhala-CharBERT** neural
+corrector — a dual-channel (subword + phonological akshara) seq2seq model. This
+catches noise classes the statistical dictionary pipeline cannot fix: Singlish
+transliteration, dialectal morphology (`යන්ඩ` → `යන්න`), ZWJ-damaged ligatures
+(`ක්රීඩාව` → `ක්‍රීඩාව`), split/fused words, and Unicode decomposition errors.
+
+Install the optional dependency and pick a backend mode:
+
+```python
+from sinlib import TypoDetector
+
+# "denoise"  - bounded word-level neural fix when dictionary suggestions fail
+# "seq2seq"  - open-vocabulary sentence-level fix when structural noise is detected
+# "hybrid"   - both, in cascade (recommended)
+detector = TypoDetector(neural_backend="hybrid")
+
+detector("මම ගෙදර යන්ඩ ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'
+
+detector("මම gedara යන්න ඕනේ")
+# 'මම ගෙදර යන්න ඕනේ'
+
+detector("ක්රීඩාව")
+# 'ක්‍රීඩාව'
+```
+
+| Kwarg | Default | Description |
+|---|---|---|
+| `neural_backend` | `None` | `None`, `"denoise"`, `"seq2seq"`, or `"hybrid"` |
+| `backend_model` | `Ransaka/sinhala-charbert-seq2seq` | HF Hub repo id or local checkpoint dir (`pytorch_model.bin` + `char_vocab.json`) |
+| `backend_device` | auto (cuda > mps > cpu) | Torch device |
+| `backend_revision` | `None` | Pin a Hub revision |
+| `backend_num_beams` | `4` | Beam width for generation |
+
+Notes:
+
+- **Default behavior is unchanged** — without `neural_backend` the detector is
+  purely statistical and requires no torch.
+- Neural corrections are gated: clean in-dictionary sentences never hit the
+  model, and a candidate is accepted only if it scores no worse than the input
+  (hallucination guard).
+- If the checkpoint cannot be downloaded, the detector degrades gracefully to
+  statistical-only correction with a warning.
+
 ### Preprocessing
 
 ```python

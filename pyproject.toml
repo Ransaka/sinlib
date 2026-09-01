@@ -28,6 +28,9 @@ classifiers = [
 dev = [
     "pytest",
 ]
+charbert = [
+    "torch >= 2.0",
+]
 
 [project.urls]
 Code = "https://github.com/Ransaka/sinlib"

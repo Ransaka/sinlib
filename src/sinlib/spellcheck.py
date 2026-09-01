@@ -12,6 +12,7 @@ import numpy as np
 
 from sinlib.tokenizer import Tokenizer
 from sinlib.utils.preprocessing import download_hub_file, Filenames, normalize_sinhala, process_text
+from sinlib.charbert.backend import CharBERTBackend, _DEFAULT_CHARBERT_REPO
 
 # Optional PyTorch import for Bi-GRU sequence labeling
 try:
@@ -430,6 +431,31 @@ class TypoDetector:
     lazy_loading : bool, optional
         When ``True``, defer loading dictionary/model data until the first
         call. Default ``False``.
+    neural_backend : str, optional
+        Optional CharBERT neural correction mode. One of:
+
+        - ``None`` (default): statistical correction only (original behavior).
+        - ``"denoise"``: bounded word-level neural denoising used as a
+          fallback when dictionary suggestions fail.
+        - ``"seq2seq"``: open-vocabulary sentence-level neural correction,
+          triggered only when structural noise is detected (Singlish
+          code-mixing, ZWJ-damaged ligatures, split/fusion whitespace
+          artifacts, or unfixable suspicious words).
+        - ``"hybrid"``: both of the above in cascade.
+
+        Requires the optional CharBERT extra (``pip install sinlib[charbert]``).
+        If the CharBERT checkpoint cannot be loaded, the detector degrades
+        gracefully to statistical-only correction with a warning.
+    backend_model : str, optional
+        HF Hub repo id (default ``Ransaka/sinhala-charbert-seq2seq``) or a
+        local checkpoint directory containing ``pytorch_model.bin`` and
+        ``char_vocab.json``.
+    backend_device : str, optional
+        Torch device for the backend. Defaults to cuda > mps > cpu.
+    backend_revision : str, optional
+        Optional HF Hub revision for the backend checkpoint.
+    backend_num_beams : int, optional
+        Beam width for seq2seq generation. Default ``4``.
     """
 
     @classmethod
@@ -438,23 +464,45 @@ class TypoDetector:
         pretrained_model_name_or_path: str = _DEFAULT_HF_REPO,
         cache_size: int = 1000,
         threshold: float = 1e-8,
+        **kwargs,
     ) -> "TypoDetector":
         if pretrained_model_name_or_path not in (_DEFAULT_HF_REPO, "sinlib"):
             raise ValueError(
                 f"Repository '{pretrained_model_name_or_path}' is not supported. "
                 f"Use '{_DEFAULT_HF_REPO}'."
             )
-        return cls(cache_size=cache_size, threshold=threshold, lazy_loading=False)
+        return cls(cache_size=cache_size, threshold=threshold, lazy_loading=False, **kwargs)
 
     def __init__(
         self,
         cache_size: int = 1000,
         threshold: float = 1e-8,
         lazy_loading: bool = False,
+        neural_backend: Optional[str] = None,
+        backend_model: str = _DEFAULT_CHARBERT_REPO,
+        backend_device: Optional[str] = None,
+        backend_revision: Optional[str] = None,
+        backend_num_beams: int = 4,
     ) -> None:
+        if neural_backend not in (None, "denoise", "seq2seq", "hybrid"):
+            raise ValueError(
+                f"Invalid neural_backend '{neural_backend}'. "
+                "Expected one of: None, 'denoise', 'seq2seq', 'hybrid'."
+            )
+
         self._cache_size = cache_size
         self._threshold = threshold
         self._lazy_loading = lazy_loading
+
+        # CharBERT neural backend configuration (loaded lazily in _ensure_loaded)
+        self.neural_backend = neural_backend
+        self._backend_model = backend_model
+        self._backend_device = backend_device
+        self._backend_revision = backend_revision
+        self._backend_num_beams = backend_num_beams
+        self._charbert: Optional[CharBERTBackend] = None
+        self.has_charbert: bool = False
+        self._neural_sentence_cache: Dict[str, Optional[str]] = {}
 
         self._dictionary: Optional[Set[str]] = None
         self._tokenizer: Optional[Tokenizer] = None
@@ -569,6 +617,120 @@ class TypoDetector:
             else:
                 self.bigru_corrector = None
                 self.has_neural_corrector = False
+
+        if self.neural_backend is not None and self._charbert is None:
+            try:
+                self._charbert = CharBERTBackend(
+                    model_id=self._backend_model,
+                    device=self._backend_device,
+                    revision=self._backend_revision,
+                    num_beams=self._backend_num_beams,
+                )
+                self.has_charbert = self._charbert._ensure_loaded()
+                if not self.has_charbert:
+                    self._charbert = None
+            except Exception as exc:
+                warnings.warn(
+                    f"Failed to initialize CharBERT neural backend: {exc}",
+                    ImportWarning,
+                )
+                self._charbert = None
+                self.has_charbert = False
+
+    def _sentence_noise_score(self, text: str) -> Tuple[int, float]:
+        """
+        Computes a lightweight noise score for a sentence: the number of
+        out-of-dictionary words and the mean akshara n-gram score of those
+        words. Used to accept/reject neural corrections.
+        """
+        self._ensure_loaded()
+        words = [self._extract_punctuation(t)[1] for t in text.split()]
+        scores: List[float] = []
+        suspicious = 0
+        for w in words:
+            if not w:
+                continue
+            norm = normalize_sinhala(w)
+            if norm in self._dictionary or w in self._dictionary:
+                continue
+            suspicious += 1
+            if self._akshara_ngram is not None:
+                scores.append(self._akshara_ngram.score_word(norm))
+            else:
+                scores.append(-999.0)
+        mean = sum(scores) / len(scores) if scores else 0.0
+        return suspicious, mean
+
+    def _try_neural_sentence(self, text: str) -> Optional[str]:
+        """
+        Runs the CharBERT seq2seq neural pass over a sentence when structural
+        noise or unfixable suspicious words are detected. Returns the neural
+        correction if it passes the acceptance guard, otherwise None.
+        """
+        if not text or not text.strip() or not self.has_charbert:
+            return None
+
+        # Trigger gate: structural noise or any out-of-dictionary word
+        words = [self._extract_punctuation(t)[1] for t in text.split()]
+        trigger = CharBERTBackend.has_structural_noise(text) or any(
+            w and (w not in self._dictionary and normalize_sinhala(w) not in self._dictionary)
+            for w in words
+        )
+        if not trigger:
+            return None
+
+        if text in self._neural_sentence_cache:
+            return self._neural_sentence_cache[text]
+
+        candidate: Optional[str] = None
+        try:
+            candidate = self._charbert.correct_sentence(
+                text, num_beams=self._backend_num_beams
+            ).strip()
+        except Exception as exc:
+            warnings.warn(f"CharBERT neural correction failed: {exc}", RuntimeWarning)
+
+        result: Optional[str] = None
+        if candidate and candidate != text:
+            # Strip trailing punctuation-only hallucination artifacts
+            stripped = candidate.rstrip(" .\u2026,!?;:-")
+            if stripped == text:
+                result = None  # only punctuation differs -> hallucination
+            else:
+                candidate = stripped if stripped else candidate
+                base = self._sentence_noise_score(text)
+                new = self._sentence_noise_score(candidate)
+                # Accept only if the neural output is not noisier than the input
+                if new[0] < base[0] or (new[0] == base[0] and new[1] >= base[1]):
+                    result = candidate
+
+        if len(self._neural_sentence_cache) < self._cache_size:
+            self._neural_sentence_cache[text] = result
+        return result
+
+    def _try_neural_word(self, word: str) -> Optional[str]:
+        """
+        Bounded word-level neural denoising fallback. Returns a replacement
+        candidate only if it is in the dictionary or scores better on the
+        akshara n-gram model than the original word.
+        """
+        if not self.has_charbert or not word:
+            return None
+        try:
+            candidate = self._charbert.correct_word(word).strip()
+        except Exception:
+            return None
+        if not candidate or candidate == word:
+            return None
+        norm = normalize_sinhala(candidate)
+        if norm in self._dictionary or candidate in self._dictionary:
+            return candidate
+        if self._akshara_ngram is not None:
+            if self._akshara_ngram.score_word(norm) > self._akshara_ngram.score_word(
+                normalize_sinhala(word)
+            ):
+                return candidate
+        return None
 
     def _load_dictionary(self) -> Set[str]:
         path = download_hub_file(Filenames.DICTIONARY.value)
@@ -796,6 +958,12 @@ class TypoDetector:
 
                     suggestions = self.suggest_correction(norm_word, n=5, prev_word=prev_word, next_word=next_word)
                     if not suggestions or suggestions[0] == "No suggestion":
+                        # Bounded neural denoising fallback (denoise / hybrid modes)
+                        if self.neural_backend in ("denoise", "hybrid"):
+                            neural_word = self._try_neural_word(word)
+                            if neural_word is not None:
+                                corrected.append(leading + neural_word + trailing)
+                                continue
                         corrected.append(leading + word + trailing)
                     else:
                         corrected.append(leading + suggestions[0] + trailing)
@@ -809,7 +977,15 @@ class TypoDetector:
                 )
                 corrected.append(leading + word + trailing)
 
-        return " ".join(corrected)
+        result_text = " ".join(corrected)
+
+        # Open-vocabulary neural sentence pass (seq2seq / hybrid modes)
+        if self.neural_backend in ("seq2seq", "hybrid"):
+            neural_sentence = self._try_neural_sentence(result_text)
+            if neural_sentence is not None:
+                result_text = neural_sentence
+
+        return result_text
 
     def __repr__(self) -> str:
         loaded = self._dictionary is not None
@@ -818,5 +994,7 @@ class TypoDetector:
             f"TypoDetector("
             f"loaded={loaded}, "
             f"dictionary_size={n_words}, "
-            f"threshold={self._threshold})"
+            f"threshold={self._threshold}, "
+            f"neural_backend={self.neural_backend!r}, "
+            f"charbert_loaded={self.has_charbert})"
         )
